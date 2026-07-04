@@ -1,0 +1,38 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+backend/.venv/
+backend/.env
+backend/staticfiles/
+backend/media/
+
+# Frontend / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Logs
+*.log
+logs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Project data imports / generated data
+data/
+
+#agent settings
+.agents/
+.codex/
+
+# Other
+flash_card_feature_plan.md
+learning_app.md
