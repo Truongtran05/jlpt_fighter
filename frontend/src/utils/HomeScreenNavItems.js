@@ -23,5 +23,9 @@ export const HomeScreenNavItems = [
     {
         name: "Register",
         to: "/register"
+    },
+    {
+        name: "Learning",
+        to : "/learning"
     }
 ]

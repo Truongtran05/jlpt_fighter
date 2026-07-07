@@ -7,6 +7,7 @@ import QuizPage from '../pages/QuizPage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
 import RegisterPage from '../pages/RegisterPage.jsx'
 import AccountPage from '../pages/AccountPage.jsx'
+import LearningPage from '../pages/LearningPage.jsx'
 
 export default function AppRoutes() {
   return (
@@ -16,6 +17,7 @@ export default function AppRoutes() {
       <Route path="/kanji/:searchQuery?" element={<KanjiPage />} />
       <Route path="/vocab/:searchQuery?" element={<VocabularyPage />} />
       <Route path="/quiz" element={<QuizPage />} />
+      <Route path="/learning" element={<LearningPage />} />
       <Route path="/login" element={<LoginPage/>} />
       <Route path="/register" element={<RegisterPage/>} />
       <Route path="/me" element={<AccountPage/>} />
