@@ -197,3 +197,47 @@ class GrammarSearchView(View):
             'previous' : page_obj.previous_page_number() if page_obj.has_previous() else None,
             'results': results,
         })
+
+class SuggestionsView(View):
+    def get(self, request):
+        query = request.GET.get('q', '')
+        query_type = query_classify(query)
+        suggestions = []
+
+        def add_kanji(query_set):
+            suggestions.extend({
+                'type': 'kanji',
+                'id': data.kanji_id,
+                'text': data.kanji,
+                'meaning': [meaning.meaning for meaning in data.meanings.all()],
+            } for data in query_set)
+
+        def add_vocab(query_set, prefix):
+            suggestions.extend({
+                'type': 'vocab',
+                'id': data.vocab_id,
+                'text': next(
+                    writing.writting
+                    for writing in data.writtings.all()
+                    if writing.writting.startswith(prefix)
+                ),
+                'meaning': [meaning.meaning for meaning in data.meanings.all()],
+            } for data in query_set)
+
+        if query_type == 'kanji':
+            add_kanji(Kanji_entry.objects.prefetch_related('meanings').filter(kanji__startswith=query)[:10])
+            add_vocab(Vocab_entry.objects.prefetch_related('writtings', 'meanings').filter(writtings__writting__startswith=query).distinct()[:10], query)
+        elif query_type == 'kana':
+            kana_query = query.replace(".", "")
+            add_kanji(Kanji_entry.objects.annotate(
+                normalized_reading=Replace(F("readings__reading"), Value("."), Value("")),
+            ).prefetch_related('meanings').filter(normalized_reading__startswith=kana_query).distinct()[:10])
+            add_vocab(Vocab_entry.objects.prefetch_related('writtings', 'meanings').filter(writtings__writting__startswith=query).distinct()[:10], query)
+        elif query_type == 'romaji':
+            query = romaji_to_kana(query)
+            add_kanji(Kanji_entry.objects.annotate(
+                normalized_reading=Replace(F("readings__reading"), Value("."), Value("")),
+            ).prefetch_related('meanings').filter(normalized_reading__startswith=query).distinct()[:10])
+            add_vocab(Vocab_entry.objects.prefetch_related('writtings', 'meanings').filter(writtings__writting__startswith=query).distinct()[:10], query)
+
+        return JsonResponse({'suggestions': list(suggestions)})
