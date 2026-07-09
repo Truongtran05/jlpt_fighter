@@ -1,8 +1,8 @@
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenVSection from "../layouts/FullScreenVSection"
 import { VStack, Heading, Text } from "@chakra-ui/react"
 export default function HomePage() {
   return (
-    <FullScreenSection
+    <FullScreenVSection
       backgroundColor="#14532d"
       isDarkBackground={true}
     >
@@ -15,6 +15,6 @@ export default function HomePage() {
           Your ultimate tool for mastering Japanese language and JLPT exam preparation.
         </Text>
       </VStack>
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

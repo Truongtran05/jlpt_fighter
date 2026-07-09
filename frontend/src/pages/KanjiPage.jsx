@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenVSection from "../layouts/FullScreenVSection"
 import { HStack, Heading ,Text} from "@chakra-ui/react"
 import Kanji from "../features/Kanji.jsx"
 import { useParams } from "react-router-dom"
@@ -25,7 +25,7 @@ export default function KanjiPage() {
   const results = response ? response.results : [];
 
   return (
-    <FullScreenSection
+    <FullScreenVSection
       backgroundColor="#14532d"
       isDarkBackground={true}
       gap={6} align="stretch" width="100%" paddingX={6} paddingTop="80px"
@@ -92,6 +92,6 @@ export default function KanjiPage() {
           </button> 
         </HStack>
       }
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

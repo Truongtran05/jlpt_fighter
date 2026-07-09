@@ -13,6 +13,8 @@ export default function NavBar({navItems}) {
     const [visible, setVisible] = useState(true);
     const [prevScrollPos, setPrevScrollPos] = useState(0);
     const [currentUser, setCurrentUser] = useState(() => getStoredUser());
+    const searchablePaths = new Set([ '/', '/grammar', '/kanji', '/vocab']);
+    const location = window.location.pathname;
 
     // Auto hidden when scrolling down
     useEffect(() => {
@@ -67,7 +69,7 @@ export default function NavBar({navItems}) {
         transition="opacity 0.3s"
     >
       <Link to="/">JLPT Fighter</Link>
-      <SearchBar/>
+      {searchablePaths.has(location) && <SearchBar/>}
       <HStack gap={4}>
         {visibleNavItems && visibleNavItems.map((item, index) => (
           <Link key={index} to={item.to}>

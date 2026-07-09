@@ -1,4 +1,4 @@
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenVSection from "../layouts/FullScreenVSection"
 import { Heading, Text, HStack } from "@chakra-ui/react"
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
@@ -26,7 +26,7 @@ export default function VocabularyPage() {
   const results = response ? response.results : [];
 
   return (
-    <FullScreenSection
+    <FullScreenVSection
       backgroundColor="#14532d"
       isDarkBackground={true}
       gap={6} 
@@ -95,6 +95,6 @@ export default function VocabularyPage() {
             </button> 
           </HStack>
         }
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

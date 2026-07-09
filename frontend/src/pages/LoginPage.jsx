@@ -1,4 +1,4 @@
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenVSection from "../layouts/FullScreenVSection"
 import {
   Box,
   Button,
@@ -37,7 +37,7 @@ export default function LoginPage() {
   }
 
   return (
-    <FullScreenSection
+    <FullScreenVSection
       backgroundColor="#14532d"
       isDarkBackground={true}
       alignItems="center"
@@ -118,6 +118,6 @@ export default function LoginPage() {
           </Text>
         </VStack>
       </Box>
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

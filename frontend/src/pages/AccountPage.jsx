@@ -1,8 +1,8 @@
-import FullScreenSection from "../layouts/FullScreenSection.jsx"
+import FullScreenVSection from "../layouts/FullScreenVSection.jsx"
 import { Box, Heading } from "@chakra-ui/react"
 export default function AccountPage() {
   return (
-    <FullScreenSection >
+    <FullScreenVSection >
         <Box
           width="100%"
           maxWidth="420px"
@@ -12,6 +12,6 @@ export default function AccountPage() {
           </Heading>
           {/* Add account details and settings here */}
         </Box>
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

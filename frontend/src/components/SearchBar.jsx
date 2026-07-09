@@ -31,7 +31,6 @@ export default function SearchBar() {
     } else {
       navigate(`${basePath}/${encodeURIComponent(query)}`);
     }
-    suggestions.length = 0; // Clear suggestions after search
   };
 
   return (

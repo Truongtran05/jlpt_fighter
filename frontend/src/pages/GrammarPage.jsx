@@ -1,4 +1,4 @@
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenVSection from "../layouts/FullScreenVSection"
 import { HStack, Heading,Text } from "@chakra-ui/react"
 import useSearch from "../hooks/UseSearch"
 import { useEffect, useState } from "react"
@@ -23,7 +23,7 @@ export default function GrammarPage() {
   const results = response ? response.results : [];
 
   return (
-<FullScreenSection
+<FullScreenVSection
       backgroundColor="#14532d"
       isDarkBackground={true}
       gap={6} align="stretch" width="100%" paddingX={6} paddingTop="80px"
@@ -89,6 +89,6 @@ export default function GrammarPage() {
           </button> 
         </HStack>
       }
-    </FullScreenSection>
+    </FullScreenVSection>
   )
 }

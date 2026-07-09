@@ -1,4 +1,4 @@
-import FullScreenSection from "../layouts/FullScreenSection"
+import FullScreenSection from "../layouts/FullScreenVSection"
 import { VStack, Heading } from "@chakra-ui/react"
 
 export default function QuizPage() {
