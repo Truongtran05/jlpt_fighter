@@ -30,9 +30,6 @@ Thumbs.db
 data/
 
 #agent settings
-.agents/
-.codex/
+.codex 
 
 # Other
-flash_card_feature_plan.md
-learning_app.md
