@@ -17,7 +17,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [formData, setFormData] = useState({ email: "", password: "" })
-  const [loginResponse,isLoginLoading, auth, loginError] = useAuth("login")
+  const [, isLoginLoading, auth, loginError] = useAuth("login")
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -38,7 +38,7 @@ export default function LoginPage() {
 
   return (
     <FullScreenVSection
-      backgroundColor="#14532d"
+      backgroundColor="bushido.surface"
       isDarkBackground={true}
       alignItems="center"
       justifyContent="center"
@@ -60,7 +60,7 @@ export default function LoginPage() {
             <Heading as="h1" size="xl">
               Log in
             </Heading>
-            <Text color="gray.600">
+            <Text color="bushido.muted">
               Continue your JLPT practice.
             </Text>
           </VStack>
@@ -110,9 +110,9 @@ export default function LoginPage() {
             Log in
           </Button>
 
-          <Text color="gray.600" textAlign="center">
+          <Text color="bushido.muted" textAlign="center">
             Need an account?{" "}
-            <ChakraLink asChild color="green.700" fontWeight="semibold">
+            <ChakraLink asChild color="bushido.primary" fontWeight="semibold">
               <RouterLink to="/register">Register</RouterLink>
             </ChakraLink>
           </Text>

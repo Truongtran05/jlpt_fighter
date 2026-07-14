@@ -27,7 +27,7 @@ export default function VocabularyPage() {
 
   return (
     <FullScreenVSection
-      backgroundColor="#14532d"
+      backgroundColor="bushido.surface"
       isDarkBackground={true}
       gap={6} 
       align="stretch" 
@@ -60,7 +60,7 @@ export default function VocabularyPage() {
               kanji={entry.kanji}
               kana={entry.kana}
               meaning={entry.meaning}
-              backgroundColor="whiteAlpha.200"
+              backgroundColor="white"
               borderRadius="md"
               padding={6}
             />

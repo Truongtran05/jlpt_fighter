@@ -202,16 +202,16 @@ export default function LearningPage() {
 
     return (
         <FullScreenVSection
-        backgroundColor="#14532d"
+        backgroundColor="bushido.surface"
         isDarkBackground={true}
-        gap={6} align="stretch" width="100%" paddingX={6} paddingTop="80px" justifyContent="center" overflowY="auto"
+        gap={6} align="stretch" width="100%" paddingX={6} justifyContent="flex-start" overflowY="auto"
         >
             {isLearningSessionActive ? (
                 <VStack align="center" gap={4}>
-                    <Heading size="lg" color="white">Learning Session</Heading>
+                    <Heading size="lg" color="bushido.ink">Learning Session</Heading>
                     <Button onClick={() => setIsLearningSessionActive(false)}>End Session</Button>
-                    {isLoading && <Text color="white">Loading flash cards...</Text>}
-                    {error && <Text color="red.200">{error}</Text>}
+                    {isLoading && <Text color="bushido.muted">Loading flash cards...</Text>}
+                    {error && <Text color="bushido.error">{error}</Text>}
                     <FlashCardCarousel flashCards={flashCards} />
                 </VStack>
             ) : (
@@ -247,7 +247,7 @@ export default function LearningPage() {
                             <Heading size="lg">{selectedSet.name}<FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" /></Heading>
                             {selectedSet.description && <Text>{selectedSet.description}</Text>}
                             {isLoading && <Text>Loading flash cards...</Text>}
-                            {error && <Text color="red.200">{error}</Text>}
+                            {error && <Text color="bushido.error">{error}</Text>}
                             {!isLoading && !error && flashCards.length === 0 && (
                                 <Text>This set has no flash cards.</Text>
                             )}
@@ -291,7 +291,7 @@ export default function LearningPage() {
                                             _hover={{ backgroundColor: 'gray.100' }}
                                         >
                                             <Text color="black">{suggestion.text}</Text>
-                                            <Text color="gray.600" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
+                                            <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
                                         </Box>
                                     ))}
                                 </VStack>
@@ -377,7 +377,7 @@ export default function LearningPage() {
                         </HStack>
                     </VStack>
                 )}
-                {error && <Text color="red.200">{error}</Text>}
+                {error && <Text color="bushido.error">{error}</Text>}
                 {flashCardSets.map((flashCardSet) => (
                     <FlashCardSet
                         key={flashCardSet.flash_card_set_id}

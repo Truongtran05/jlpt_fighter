@@ -6,7 +6,7 @@ import useSuggestions from '../hooks/UseSuggestions.jsx';
 
 const searchablePaths = new Set([ '/', '/grammar', '/kanji', '/vocab', '/quiz' ]);
 
-export default function SearchBar() {
+export default function SearchBar({ compact = false }) {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function SearchBar() {
   };
 
   return (
-    <HStack direction="row" spacing={2} align="center" position="relative">
+    <HStack gap={2} align="center" position="relative" width={compact ? "180px" : "100%"}>
         <Input
             type="text"
             placeholder="Search..."
@@ -70,12 +70,12 @@ export default function SearchBar() {
                       _hover={{ backgroundColor: 'gray.100' }}
                   >
                       <Text color="black">{suggestion.text}</Text>
-                      <Text color="gray.600" fontSize="sm">{(suggestion.meaning ?? []).join(', ')}</Text>
+                      <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(', ')}</Text>
                   </Box>
               ))}
             </VStack>
         )}
-        <Button type="button" onClick={() => handleSearch()}>Search</Button>
+        {!compact && <Button type="button" bg="bushido.primary" color="white" onClick={() => handleSearch()}>Search</Button>}
     </HStack>
   )
 }

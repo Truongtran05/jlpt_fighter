@@ -136,7 +136,7 @@ export default function FlashCard({ flashCard, onUpdated }) {
         >
           <CardFace>
             <HStack justify="space-between" width="100%">
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="sm" color="bushido.muted">
                 {cardType}
               </Text>
               <Button
@@ -150,26 +150,26 @@ export default function FlashCard({ flashCard, onUpdated }) {
                 <FaEdit />
               </Button>
             </HStack>
-            <Heading size="3xl" textAlign="center" color="gray.800" noOfLines={2}>
+            <Heading size="3xl" textAlign="center" color="bushido.ink" noOfLines={2}>
               {content.front}
             </Heading>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="sm" color="bushido.muted">
               Click to flip
             </Text>
           </CardFace>
 
           <CardFace transform="rotateX(180deg)">
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="sm" color="bushido.muted">
               {cardType}
             </Text>
-            <Heading size="lg" color="gray.800">
+            <Heading size="lg" color="bushido.ink">
               {content.backTitle}
             </Heading>
             <VStack align="stretch" gap={2} width="100%">
               {content.lines
                 .filter(([, value]) => value)
                 .map(([label, value]) => (
-                  <Text key={label} fontSize="md" color="gray.600">
+                  <Text key={label} fontSize="md" color="bushido.muted">
                     <Text as="span" fontWeight="semibold">
                       {label}:
                     </Text> {" "}
@@ -221,12 +221,12 @@ function CardEditForm({onSubmit, onCancel}) {
         <Input 
           placeholder="Type your kanji/vocab/grammar term here..."
           backgroundColor="white"
-          color="gray.800"
+          color="bushido.ink"
           autoFocus
           value={query}
           onChange={handleChange}
         />
-        {selectedSuggestion && (<Text color="gray.600" fontSize="sm">Selected: {selectedSuggestion.text}</Text>)}
+        {selectedSuggestion && (<Text color="bushido.muted" fontSize="sm">Selected: {selectedSuggestion.text}</Text>)}
         {isSuggestionsOpen && suggestions.length > 0 && (
             <VStack
                 align="stretch"
@@ -254,7 +254,7 @@ function CardEditForm({onSubmit, onCancel}) {
                         _hover={{ backgroundColor: 'gray.100' }}
                     >
                         <Text color="black">{suggestion.text}</Text>
-                        <Text color="gray.600" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
+                        <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
                     </Box>
                 ))}
             </VStack>
@@ -263,7 +263,7 @@ function CardEditForm({onSubmit, onCancel}) {
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" colorScheme="green">
+          <Button type="submit" colorPalette="green">
             Save
           </Button>
         </HStack>

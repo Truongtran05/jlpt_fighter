@@ -4,7 +4,7 @@ import { VStack, Heading } from "@chakra-ui/react"
 export default function QuizPage() {
   return (
     <FullScreenSection
-      backgroundColor="#14532d"
+      backgroundColor="bushido.surface"
       isDarkBackground={true}
     >
       <VStack spacing={4} align="center">

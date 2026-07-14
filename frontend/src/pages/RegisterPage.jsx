@@ -20,8 +20,8 @@ export default function RegisterPage() {
     email: "",
     password: "",
   })
-  const [registerResponse, isRegisterLoading, resgisterAuth, registerError] = useAuth("register")
-  const [loginResponse, isLoginLoading, loginAuth, loginError] = useAuth("login")
+  const [, isRegisterLoading, resgisterAuth, registerError] = useAuth("register")
+  const [, isLoginLoading, loginAuth, loginError] = useAuth("login")
   const [error, setError] = useState(null)
 
   const handleChange = (event) => {
@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
   return (
     <FullScreenVSection
-      backgroundColor="#14532d"
+      backgroundColor="bushido.surface"
       isDarkBackground={true}
       alignItems="center"
       justifyContent="center"
@@ -74,7 +74,7 @@ export default function RegisterPage() {
             <Heading as="h1" size="xl">
               Register
             </Heading>
-            <Text color="gray.600">
+            <Text color="bushido.muted">
               Create your JLPT Fighter account.
             </Text>
           </VStack>
@@ -125,9 +125,9 @@ export default function RegisterPage() {
             />
           </VStack>
 
-          {loginError || registerError && (
+          {(error || loginError || registerError) && (
             <Text color="red.600" fontWeight="semibold">
-              {loginError || registerError}
+              {error || loginError || registerError}
             </Text>
           )}
 
@@ -140,9 +140,9 @@ export default function RegisterPage() {
             Create account
           </Button>
 
-          <Text color="gray.600" textAlign="center">
+          <Text color="bushido.muted" textAlign="center">
             Already have an account?{" "}
-            <ChakraLink asChild color="green.700" fontWeight="semibold">
+            <ChakraLink asChild color="bushido.primary" fontWeight="semibold">
               <RouterLink to="/login">Log in</RouterLink>
             </ChakraLink>
           </Text>

@@ -26,7 +26,7 @@ export default function KanjiPage() {
 
   return (
     <FullScreenVSection
-      backgroundColor="#14532d"
+      backgroundColor="bushido.surface"
       isDarkBackground={true}
       gap={6} align="stretch" width="100%" paddingX={6} paddingTop="80px"
     >
@@ -58,7 +58,7 @@ export default function KanjiPage() {
             strokeCount={entry.strokeCount}
             jlptLevel={entry.jlptLevel}
             meaning={entry.meaning}
-            backgroundColor="whiteAlpha.200"
+            backgroundColor="white"
             borderRadius="md"
             padding={6}
           />
