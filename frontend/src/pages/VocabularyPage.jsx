@@ -33,7 +33,7 @@ export default function VocabularyPage() {
       align="stretch" 
       width="100%" 
       paddingX={6} 
-      paddingTop="80px"
+      paddingTop={6}
     >
         {
         isLoading ? (

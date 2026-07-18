@@ -1,11 +1,10 @@
 from rest_framework.response import Response
-from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import Flash_card_entry, Flash_card_set, Kanji_flash_card, Vocab_flash_card, Grammar_flash_card
 from dictionary.models import Kanji_entry, Vocab_entry, Grammar_entry
-from .serializers import FlashCardEntrySerializer, FlashCardSetSerializer
+from .serializers import FlashCardDetailSerializer, FlashCardEntrySerializer, FlashCardSetSerializer
 from django.db import transaction
 
 # Create your views here.
@@ -46,51 +45,12 @@ class FlashCardSetDetailsView(APIView):
         if flash_card_set is None:
             return Response({"error": "Flashcard set not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        flash_cards_data = []
-        for flash_card in flash_card_set.flash_cards.filter(deleted_at__isnull=True):
-            if flash_card.type == 'kanji':
-                entry =  flash_card.kanji_flash_card.kanji_entry
-                kanji_entry_data = {
-                    "flash_card_id": flash_card.flash_card_id,
-                    "kanji_id": entry.kanji_id,
-                    "type" : flash_card.type,
-                    "kanji": entry.kanji,
-                    "onyomi": [reading.reading for reading in entry.readings.filter(reading_type='onyomi')],
-                    "kunyomi": [reading.reading for reading in entry.readings.filter(reading_type='kunyomi')],
-                    "strokeCount": entry.stroke_count,
-                    "jlptLevel": entry.jlpt_level,
-                    "meaning": [meaning.meaning for meaning in entry.meanings.all()],
-                }
-                flash_cards_data.append(kanji_entry_data)
-            elif flash_card.type == 'vocab':
-                entry = flash_card.vocab_flash_card.vocab_entry
-                vocab_entry_data = {
-                    "flash_card_id": flash_card.flash_card_id,
-                    "vocab_id": entry.vocab_id,
-                    "type" : flash_card.type,
-                    "kana": [writting.writting for writting in entry.writtings.filter(writting_type='kana')],
-                    "kanji": [writting.writting for writting in entry.writtings.filter(writting_type='kanji')],
-                    "meaning": [meaning.meaning for meaning in entry.meanings.all()],
-                }
-                flash_cards_data.append(vocab_entry_data)
-            elif flash_card.type == 'grammar':
-                entry = flash_card.grammar_flash_card.grammar_entry
-                grammar_entry_data = {
-                    "flash_card_id": flash_card.flash_card_id,
-                    "grammar_id": entry.grammar_id,
-                    "type" : flash_card.type,
-                    "grammar": entry.grammar,
-                    "meaning": entry.meaning,
-                    "examples_japanese" : [example.example_japanese for example in entry.examples.all()],
-                    "examples_english" : [example.example_english for example in entry.examples.all()],
-                    "examples_romaji" : [example.example_romaji for example in entry.examples.all()],
-                }
-                flash_cards_data.append(grammar_entry_data)
-        return JsonResponse({
+        flash_cards = flash_card_set.flash_cards.filter(deleted_at__isnull=True)
+        return Response({
             "name" : flash_card_set.name,
             "description" : flash_card_set.description,
             "visibility" : flash_card_set.visibility,
-            "flash_cards" : flash_cards_data
+            "flash_cards" : FlashCardDetailSerializer(flash_cards, many=True).data
         })
 
     #update a specific flashcard set
@@ -162,7 +122,10 @@ class FlashCardCreateView(APIView):
                         flash_card_entry=serializer.instance,
                         grammar_entry_id=entry_id
                     )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(
+                FlashCardDetailSerializer(serializer.instance).data,
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FlashCardUpdateView(APIView):
@@ -215,7 +178,7 @@ class FlashCardUpdateView(APIView):
                         flash_card_entry=flash_card,
                         **{self.entry_field_by_type[card_type]: entry_id}
                     )
-            return Response(serializer.data)
+            return Response(FlashCardDetailSerializer(flash_card).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     #soft delete a specific flashcard
@@ -231,3 +194,24 @@ class FlashCardUpdateView(APIView):
         
         flash_card.soft_delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class UpdateFlashCardStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, flash_card_id):
+        flash_card = Flash_card_entry.objects.filter(
+            flash_card_id=flash_card_id,
+            flash_card_set__user=request.user,
+            deleted_at__isnull=True,
+        ).first()
+
+        if flash_card is None:
+            return Response({"error": "Flashcard not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        status_value = request.data.get('status')
+        if status_value not in dict(Flash_card_entry.Status.choices):
+            return Response({"status": "Invalid status value"}, status=status.HTTP_400_BAD_REQUEST)
+
+        flash_card.status = status_value
+        flash_card.save(update_fields=["status"])
+        return Response(FlashCardDetailSerializer(flash_card).data)

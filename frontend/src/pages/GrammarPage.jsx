@@ -26,7 +26,7 @@ export default function GrammarPage() {
 <FullScreenVSection
       backgroundColor="bushido.surface"
       isDarkBackground={true}
-      gap={6} align="stretch" width="100%" paddingX={6} paddingTop="80px"
+      gap={6} align="stretch" width="100%" paddingX={6} paddingTop={6}
     >
       {/* Display loading, error, or results based on the state */}
       {isLoading ? (

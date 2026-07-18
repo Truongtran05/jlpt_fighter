@@ -1,13 +1,26 @@
 import { Box, Heading, Text, VStack , HStack , Button, Input} from "@chakra-ui/react";
 import { useState } from "react";
 import AuthApiClient from "../api/AuthApiClient.js";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit} from "react-icons/fa";
+import { BsFillBookmarkCheckFill,  BsBookmarkDashFill } from "react-icons/bs";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
 
 const typeLabels = {
   kanji: "Kanji",
   vocab: "Vocabulary",
   grammar: "Grammar",
+};
+const primaryButtonStyles = {
+  bg: "bushido.primary",
+  color: "white",
+  borderRadius: "8px",
+  _hover: { bg: "bushido.primaryHover", transform: "translateY(-1px)" },
+};
+const secondaryButtonStyles = {
+  bg: "bushido.secondarySoft",
+  color: "#0a1f15",
+  borderRadius: "8px",
+  _hover: { bg: "bushido.primarySoft" },
 };
 
 function asList(value) {
@@ -87,19 +100,11 @@ export default function FlashCard({ flashCard, onUpdated }) {
     }
 
     try{
-      await AuthApiClient.patch(`/flashcards/${flashCard.flash_card_id}/`, {
+      const response = await AuthApiClient.patch(`/flashcards/${flashCard.flash_card_id}/`, {
         type: selectedSuggestion.type,
         entry_id: selectedSuggestion.id,
       });
-      onUpdated?.({
-        ...flashCard,
-        type: selectedSuggestion.type,
-        kanji: selectedSuggestion.type === "kanji" ? selectedSuggestion.text : [selectedSuggestion.text],
-        grammar: selectedSuggestion.type === "grammar" ? selectedSuggestion.text : flashCard.grammar,
-        meaning: selectedSuggestion.type === "grammar"
-          ? (Array.isArray(selectedSuggestion.meaning) ? selectedSuggestion.meaning.join(", ") : selectedSuggestion.meaning)
-          : selectedSuggestion.meaning,
-      });
+      onUpdated?.(response.data);
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating flashcard:", error);
@@ -140,7 +145,10 @@ export default function FlashCard({ flashCard, onUpdated }) {
                 {cardType}
               </Text>
               <Button
-                variant="outline"
+                bg="white"
+                color="bushido.primary"
+                borderColor="bushido.outline"
+                _hover={{ bg: "bushido.surfaceLow" }}
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -153,16 +161,19 @@ export default function FlashCard({ flashCard, onUpdated }) {
             <Heading size="3xl" textAlign="center" color="bushido.ink" noOfLines={2}>
               {content.front}
             </Heading>
-            <Text fontSize="sm" color="bushido.muted">
-              Click to flip
-            </Text>
+            <HStack justify="space-between" width="100%">
+              <Text fontSize="sm" color="bushido.muted">
+                Click to flip
+              </Text>
+              {flashCard.status === "remembered" ? (<BsFillBookmarkCheckFill color="#174b34" />) : (<BsBookmarkDashFill color="#ba1a1a" />)}
+            </HStack>
           </CardFace>
 
           <CardFace transform="rotateX(180deg)">
             <Text fontSize="sm" color="bushido.muted">
               {cardType}
             </Text>
-            <Heading size="lg" color="bushido.ink">
+            <Heading size="lg" textAlign="center" color="bushido.ink">
               {content.backTitle}
             </Heading>
             <VStack align="stretch" gap={2} width="100%">
@@ -184,7 +195,7 @@ export default function FlashCard({ flashCard, onUpdated }) {
   );
 }
 
-function CardEditForm({onSubmit, onCancel}) {
+function CardEditForm({onSubmit, onCancel }) {
   const [query, setQuery] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
@@ -231,8 +242,8 @@ function CardEditForm({onSubmit, onCancel}) {
             <VStack
                 align="stretch"
                 gap={0}
-                position="absolute"
-                top="42px"
+                position="relative"
+                top="0px"
                 left={0}
                 right={0}
                 overflowY="auto"
@@ -260,10 +271,10 @@ function CardEditForm({onSubmit, onCancel}) {
             </VStack>
         )}
         <HStack justify="flex-end" gap={2}>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button {...secondaryButtonStyles} type="button" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" colorPalette="green">
+          <Button {...primaryButtonStyles} type="submit">
             Save
           </Button>
         </HStack>

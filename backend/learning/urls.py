@@ -10,4 +10,6 @@ urlpatterns = [
     path("flashcard-sets/<flash_card_set_id>/flashcards/", views.FlashCardCreateView.as_view(), name="flashcardentry-detail"),
     #delete or update a specific flashcard (DELETE-PATCH)
     path("flashcards/<flash_card_id>/", views.FlashCardUpdateView.as_view(), name="flashcarddelete-detail"),
+    #mark a specific flashcard as remembered or forgotten (PATCH)
+    path("flashcards/<flash_card_id>/status/", views.UpdateFlashCardStatusView.as_view(), name="flashcardstatus-update"),
 ]

@@ -1,81 +1,48 @@
-import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import {useState} from 'react';
-import useSuggestions from '../hooks/UseSuggestions.jsx';
+import { Box, Button, HStack, Input, Text, VStack } from "@chakra-ui/react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { useState } from "react"
+import useSuggestions from "../hooks/UseSuggestions.jsx"
 
+const modes = ["vocab", "grammar", "kanji"]
 
-const searchablePaths = new Set([ '/', '/grammar', '/kanji', '/vocab', '/quiz' ]);
+export default function SearchBar() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const suggestions = useSuggestions(searchQuery)
+  const routeMode = location.pathname.split("/").filter(Boolean)[0]
+  const mode = modes.includes(routeMode) ? routeMode : "vocab"
 
-export default function SearchBar({ compact = false }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
-
-  const suggestions = useSuggestions(searchQuery);
-
-  const handleChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setIsSuggestionsOpen(!!value.trim());
-  };
+  const handleChange = (event) => {
+    const value = event.target.value
+    setSearchQuery(value)
+    setIsSuggestionsOpen(Boolean(value.trim()))
+  }
 
   const handleSearch = (value = searchQuery) => {
-    const query = value.trim();
-    const basePath = `/${location.pathname.split('/').filter(Boolean)[0] ?? ''}`;
-
-    if (!query || !searchablePaths.has(basePath)) return;
-
-    if(basePath === '/') {
-      navigate(`/vocab/${encodeURIComponent(query)}`);
-    } else {
-      navigate(`${basePath}/${encodeURIComponent(query)}`);
-    }
-  };
+    const query = value.trim()
+    if (query) navigate(`/${mode}/${encodeURIComponent(query)}`)
+  }
 
   return (
-    <HStack gap={2} align="center" position="relative" width={compact ? "180px" : "100%"}>
-        <Input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={handleChange}
-            color = "black"
-            backgroundColor = "white"
-        ></Input>
-        {isSuggestionsOpen && suggestions.length > 0 && (
-            <VStack
-              align="stretch"
-              gap={0}
-              position="absolute"
-              top="100%"
-              left={0}
-              right={0}
-              overflowY="auto"
-              maxHeight="200px"
-              backgroundColor="white"
-              border="1px solid #ccc"
-              zIndex={1000}
-            >
-              {suggestions.map((suggestion) => (
-                  <Box
-                      key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
-                      onClick={() => {
-                          setSearchQuery(suggestion.text);
-                          setIsSuggestionsOpen(false);
-                          handleSearch(suggestion.text);
-                      }}
-                      padding="8px"
-                      cursor="pointer"
-                      _hover={{ backgroundColor: 'gray.100' }}
-                  >
-                      <Text color="black">{suggestion.text}</Text>
-                      <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(', ')}</Text>
-                  </Box>
-              ))}
-            </VStack>
-        )}
-        {!compact && <Button type="button" bg="bushido.primary" color="white" onClick={() => handleSearch()}>Search</Button>}
+    <HStack gap={2} align="center" position="relative" width="100%" maxW="900px" mx="auto">
+      <HStack gap={1}>
+        {modes.map((item) => <Button key={item} size="sm" variant="ghost" bg={mode === item ? "bushido.secondarySoft" : "transparent"} color={mode === item ? "bushido.primary" : "bushido.muted"} onClick={() => navigate(`/${item}`)} textTransform="capitalize">{item}</Button>)}
+      </HStack>
+      <Input type="search" aria-label={`Search ${mode}`} placeholder={`Search ${mode}...`} value={searchQuery} onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleSearch()} color="bushido.ink" backgroundColor="white" />
+      <Button type="button" bg="bushido.primary" color="white" onClick={() => handleSearch()}>Search</Button>
+
+      {isSuggestionsOpen && suggestions.length > 0 && (
+        <VStack align="stretch" gap={0} position="absolute" top="100%" left={{ base: 0, md: "230px" }} right="84px" overflowY="auto" maxHeight="240px" backgroundColor="white" borderWidth="1px" borderRadius="8px" zIndex={1000}>
+          {suggestions.filter((suggestion) => suggestion.type === mode).map((suggestion) => (
+            <Box key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`} onClick={() => { setSearchQuery(suggestion.text); setIsSuggestionsOpen(false); handleSearch(suggestion.text) }} padding="8px" cursor="pointer" _hover={{ backgroundColor: "bushido.surfaceLow" }}>
+              <Text color="bushido.ink">{suggestion.text}</Text>
+              <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
+            </Box>
+          ))}
+        </VStack>
+      )}
     </HStack>
   )
 }

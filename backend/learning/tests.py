@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from dictionary.models import Grammar_entry, Kanji_entry
+from dictionary.models import Grammar_entry, Kanji_entry, Kanji_meaning, Kanji_reading
 from learning.models import Flash_card_entry, Flash_card_set, Grammar_flash_card, Kanji_flash_card
 
 
@@ -20,6 +20,27 @@ class FlashCardSetCreateViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["flash_card_set_id"], flash_card_set.flash_card_set_id)
+
+
+class FlashCardCreateViewTests(APITestCase):
+    def test_post_returns_detailed_flashcard(self):
+        user = User.objects.create(email="test@example.com", name="Test User")
+        flash_card_set = Flash_card_set.objects.create(user=user)
+        kanji = Kanji_entry.objects.create(kanji="日", stroke_count=4, jlpt_level=5)
+        Kanji_reading.objects.create(kanji_entry=kanji, reading_type="onyomi", reading="ニチ")
+        Kanji_meaning.objects.create(kanji_entry=kanji, meaning="day")
+
+        self.client.force_authenticate(user=user)
+        response = self.client.post(
+            reverse("flashcardentry-detail", kwargs={"flash_card_set_id": flash_card_set.flash_card_set_id}),
+            {"type": "kanji", "entry_id": kanji.kanji_id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["kanji"], "日")
+        self.assertEqual(response.data["onyomi"], ["ニチ"])
+        self.assertEqual(response.data["meaning"], ["day"])
 
 
 class FlashCardUpdateViewTests(APITestCase):
@@ -57,3 +78,5 @@ class FlashCardUpdateViewTests(APITestCase):
                 grammar_entry=grammar,
             ).exists()
         )
+        self.assertEqual(response.data["grammar"], "てもいい")
+        self.assertEqual(response.data["meaning"], "may")

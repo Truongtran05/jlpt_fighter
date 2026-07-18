@@ -47,6 +47,9 @@ class Flash_card_entry(models.Model):
         KANJI = "kanji", "Kanji"
         VOCAB = "vocab", "Vocab"
         GRAMMAR = "grammar", "Grammar"
+    class Status(models.TextChoices):
+        REMEMBERED = "remembered", "Remembered"
+        FORGOTTEN = "forgotten", "Forgotten"
     flash_card_id = models.AutoField(primary_key=True)
     flash_card_set = models.ForeignKey(
         Flash_card_set,
@@ -56,6 +59,11 @@ class Flash_card_entry(models.Model):
     type = models.CharField(
         max_length=20,
         choices=card_type.choices,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.FORGOTTEN
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

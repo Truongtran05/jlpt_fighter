@@ -8,13 +8,12 @@ import useSuggestions from "../hooks/UseSuggestions.jsx";
 import FlashCardCarousel from "../features/FlashCardCarousel.jsx";
 import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
-
-
-function asText(value) {
-    return Array.isArray(value) ? value.join(", ") : value;
-}
+import {getStoredUser} from "../utils/AuthStorage.js"
+import { useNavigate } from "react-router-dom";
+import { toaster } from "../components/ui/toaster.jsx";
 
 export default function LearningPage() {
+    const navigate = useNavigate();
     const [flashCardSets, setFlashCardSets] = useState([]);
     const [selectedSet, setSelectedSet] = useState(null);
     const [flashCards, setFlashCards] = useState([]);
@@ -29,6 +28,26 @@ export default function LearningPage() {
     const [isEditingSet, setIsEditingSet] = useState(false);
     const [isLearningSessionActive, setIsLearningSessionActive] = useState(false);
     const suggestions = useSuggestions(newCardQuery);
+    const currentUser = getStoredUser();
+    const [currentCardMode, setCurrentCardMode] = useState("all"); // "all", "remembered", "forgotten"
+    const primaryButtonStyles = {
+        bg: "bushido.primary",
+        color: "white",
+        borderRadius: "8px",
+        _hover: { bg: "bushido.primaryHover", transform: "translateY(-1px)" },
+    };
+    const secondaryButtonStyles = {
+        bg: "bushido.secondarySoft",
+        color: "#0a1f15",
+        borderRadius: "8px",
+        _hover: { bg: "bushido.primarySoft" },
+    };
+    const destructiveButtonStyles = {
+        bg: "bushido.error",
+        color: "white",
+        borderRadius: "8px",
+        _hover: { bg: "#8f1414", transform: "translateY(-1px)" },
+    };
 
     useEffect(() => {
         const fetchFlashCardSets = async () => {
@@ -42,6 +61,17 @@ export default function LearningPage() {
 
         fetchFlashCardSets();
     }, []);
+
+    useEffect(() => {
+        if(!currentUser) {
+            toaster.create({
+                title: "Login required",
+                description: "Please log in to access your flashcard sets.",
+                type: "warning",
+            });
+            navigate("/login");
+        }
+    }, [currentUser, navigate]);
 
     const loadFlashCards = async (flashCardSet) => {
         setFlashCards([]);
@@ -58,25 +88,6 @@ export default function LearningPage() {
         }
     };
 
-    const flashCardFromSuggestion = (flashCardId, suggestion) => {
-        const meaning = suggestion.meaning ?? [];
-        const base = {
-            flash_card_id: flashCardId,
-            type: suggestion.type,
-            meaning,
-        };
-
-        if (suggestion.type === "kanji") {
-            return { ...base, kanji: suggestion.text };
-        }
-
-        if (suggestion.type === "vocab") {
-            return { ...base, kanji: [suggestion.text] };
-        }
-
-        return { ...base, grammar: suggestion.text, meaning: asText(meaning) };
-    };
-
     const handleSelectSet = async (flashCardSet) => {
         setSelectedSet(flashCardSet);
         setError(null);
@@ -91,6 +102,15 @@ export default function LearningPage() {
     };
 
     const handleNewFlashCardSet = () => {
+        if(!currentUser) {
+            toaster.create({
+                title: "Login required",
+                description: "Please log in before creating a new flashcard set.",
+                type: "warning",
+            });
+            navigate("/login");
+            return;
+        }
         setIsNewSetFormOpen(true);
         setError(null);
     };
@@ -162,7 +182,7 @@ export default function LearningPage() {
             });
             setFlashCards((cards) => [
                 ...cards,
-                flashCardFromSuggestion(response.data.flash_card_id, selectedSuggestion),
+                response.data,
             ]);
             setNewCardQuery("");
             setSelectedSuggestion(null);
@@ -200,6 +220,7 @@ export default function LearningPage() {
         }
     };
 
+
     return (
         <FullScreenVSection
         backgroundColor="bushido.surface"
@@ -209,10 +230,10 @@ export default function LearningPage() {
             {isLearningSessionActive ? (
                 <VStack align="center" gap={4}>
                     <Heading size="lg" color="bushido.ink">Learning Session</Heading>
-                    <Button onClick={() => setIsLearningSessionActive(false)}>End Session</Button>
+                    <Button {...secondaryButtonStyles} onClick={() => setIsLearningSessionActive(false)}>End Session</Button>
                     {isLoading && <Text color="bushido.muted">Loading flash cards...</Text>}
                     {error && <Text color="bushido.error">{error}</Text>}
-                    <FlashCardCarousel flashCards={flashCards} />
+                    <FlashCardCarousel flashCards={flashCards} onStatusUpdated={handleFlashCardUpdated} />
                 </VStack>
             ) : (
             selectedSet ? (
@@ -236,8 +257,8 @@ export default function LearningPage() {
                                 defaultValue={selectedSet.description}
                             />
                             <HStack>
-                                <Button type="submit">Save Changes</Button>
-                                <Button type="button" variant="ghost" onClick={() => setIsEditingSet(false)}>
+                                <Button {...primaryButtonStyles} type="submit">Save Changes</Button>
+                                <Button {...secondaryButtonStyles} type="button" onClick={() => setIsEditingSet(false)}>
                                     Cancel
                                 </Button>
                             </HStack>
@@ -262,6 +283,7 @@ export default function LearningPage() {
                                 onChange={handleNewFlashCardChange}
                                 backgroundColor="white"
                                 color="gray.900"
+                                width="20%"
                                 required
                             />
                             {isSuggestionsOpen && suggestions.length > 0 && (
@@ -275,6 +297,7 @@ export default function LearningPage() {
                                     overflowY="auto"
                                     maxHeight="200px"
                                     backgroundColor="white"
+                                    width="20%"
                                     border="1px solid #ccc"
                                     zIndex={1000}
                                 >
@@ -303,37 +326,65 @@ export default function LearningPage() {
                             )}
                             
                             <HStack>
-                                <Button type="submit" loading={isLoading} loadingText="Creating" disabled={!selectedSuggestion}>
+                                <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating" disabled={!selectedSuggestion}>
                                     Create FlashCard
                                 </Button>
-                                <Button type="button" variant="ghost" onClick={() => setIsNewCardFormOpen(false)}>
+                                <Button {...secondaryButtonStyles} type="button" onClick={() => setIsNewCardFormOpen(false)}>
                                     Cancel
                                 </Button>
                             </HStack>
                         </VStack>
                         ) :(
                             <HStack justifyContent="space-between" alignItems="center">
-                                <Button alignSelf="flex-start" onClick={handleBackToSets}>
+                                <Button {...secondaryButtonStyles} alignSelf="flex-start" onClick={handleBackToSets}>
                                     Back to flashcard sets
                                 </Button>
-                                <Button type="button" alignSelf="center" onClick={handleStartLearning}>
+                                <Button {...primaryButtonStyles} type="button" alignSelf="center" onClick={handleStartLearning}>
                                     StartLearning
                                 </Button>
-                                <Button alignSelf="flex-end" onClick={handleNewFlashCard}>
+                                <Button {...primaryButtonStyles} alignSelf="flex-end" onClick={handleNewFlashCard}>
                                     New FlashCard
                                 </Button>
                             </HStack>
                         )}
                     {
                     <VStack align="center" gap={4}>
-                    {!isLoading && !error && flashCards.map((flashCard) => (
+                    <HStack justify="center" gap = {4}>
+                        <Button
+                            {...(currentCardMode === "remembered" ? primaryButtonStyles : secondaryButtonStyles)}
+                            onClick={() => setCurrentCardMode("remembered")}
+                        >
+                            Remembered
+                        </Button>
+                        <Button
+                            {...(currentCardMode === "all" ? primaryButtonStyles : secondaryButtonStyles)}
+                            onClick={() => setCurrentCardMode("all")}
+                        >
+                            All
+                        </Button>
+                        <Button
+                            {...(currentCardMode === "forgotten" ? primaryButtonStyles : secondaryButtonStyles)}
+                            onClick={() => setCurrentCardMode("forgotten")}
+                        >
+                            Forgotten
+                        </Button>
+                    </HStack>
+                    {!isLoading && !error && flashCards.filter((flashCard) => {
+                        if (currentCardMode === "remembered") {
+                            return flashCard.status === "remembered";
+                        }
+                        if (currentCardMode === "forgotten") {
+                            return flashCard.status === "forgotten";
+                        }
+                        return true;
+                    }).map((flashCard) => (
                         <HStack key={flashCard.flash_card_id} align="center" justify="center" gap={4} width="100%">
                             <FlashCard
                                 flashCard={flashCard}
                                 onUpdated={handleFlashCardUpdated}
                             />
-                            <Button onClick={() => handleDeleteFlashCard(flashCard.flash_card_id)}>
-                                <MdDelete color="red.500"/>
+                            <Button {...destructiveButtonStyles} onClick={() => handleDeleteFlashCard(flashCard.flash_card_id)}>
+                                <MdDelete />
                             </Button>
                         </HStack>
                     ))}
@@ -346,7 +397,7 @@ export default function LearningPage() {
                     <Text as="h1" fontSize="2xl" fontWeight="bold">
                         My Flashcard sets 
                     </Text>
-                    <Button onClick={handleNewFlashCardSet}>New Flashcard Set</Button>
+                    <Button {...primaryButtonStyles} onClick={handleNewFlashCardSet}>New Flashcard Set</Button>
                 </HStack>
                 {isNewSetFormOpen && (
                     <VStack as="form" onSubmit={handleSubmitNewFlashCardSet} align="stretch" gap={3}>
@@ -357,6 +408,7 @@ export default function LearningPage() {
                             onChange={(event) => setNewSet((set) => ({ ...set, name: event.target.value }))}
                             backgroundColor="white"
                             color="gray.900"
+                            width="20%"
                             required
                         />
                         <Textarea
@@ -365,13 +417,14 @@ export default function LearningPage() {
                             value={newSet.description}
                             onChange={(event) => setNewSet((set) => ({ ...set, description: event.target.value }))}
                             backgroundColor="white"
+                            width="20%"
                             color="gray.900"
                         />
                         <HStack>
-                            <Button type="submit" loading={isLoading} loadingText="Creating">
+                            <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating">
                                 Submit
                             </Button>
-                            <Button type="button" variant="ghost" onClick={() => setIsNewSetFormOpen(false)}>
+                            <Button {...secondaryButtonStyles} type="button" onClick={() => setIsNewSetFormOpen(false)}>
                                 Cancel
                             </Button>
                         </HStack>
