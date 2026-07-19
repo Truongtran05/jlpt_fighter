@@ -1,6 +1,6 @@
 import { Box, Heading, Text, VStack , HStack , Button, Input} from "@chakra-ui/react";
 import { useState } from "react";
-import AuthApiClient from "../api/AuthApiClient.js";
+import AuthApiClient from "../api/clients/AuthApiClient.js";
 import { FaEdit} from "react-icons/fa";
 import { BsFillBookmarkCheckFill,  BsBookmarkDashFill } from "react-icons/bs";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
@@ -78,7 +78,7 @@ function getCardContent(flashCard) {
   };
 }
 
-export default function FlashCard({ flashCard, onUpdated }) {
+export default function FlashCard({ flashCard, onUpdated , isEditable}) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -144,19 +144,21 @@ export default function FlashCard({ flashCard, onUpdated }) {
               <Text fontSize="sm" color="bushido.muted">
                 {cardType}
               </Text>
-              <Button
-                bg="white"
-                color="bushido.primary"
-                borderColor="bushido.outline"
-                _hover={{ bg: "bushido.surfaceLow" }}
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEdit();
-                }}
-              >
-                <FaEdit />
-              </Button>
+              {isEditable && (
+                <Button
+                  bg="white"
+                  color="bushido.primary"
+                  borderColor="bushido.outline"
+                  _hover={{ bg: "bushido.surfaceLow" }}
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit();
+                  }}
+                >
+                  <FaEdit />
+                </Button>
+              )}
             </HStack>
             <Heading size="3xl" textAlign="center" color="bushido.ink" noOfLines={2}>
               {content.front}

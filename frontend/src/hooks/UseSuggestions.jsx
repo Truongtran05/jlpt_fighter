@@ -1,6 +1,6 @@
 // frontend/src/hooks/useSuggestions.js
 import { useEffect, useState } from "react";
-import ApiClient from "../api/ApiClient.js";
+import {getSuggestions} from "../api/services/DictionaryServices"
 
 export default function useSuggestions(query) {
   const [suggestions, setSuggestions] = useState([]);
@@ -13,8 +13,8 @@ export default function useSuggestions(query) {
     }
 
     const timer = setTimeout(() => {
-      ApiClient.get(`/suggestions/?q=${encodeURIComponent(value)}`)
-        .then((response) => setSuggestions(response.data.suggestions ?? []))
+      getSuggestions({ q: value })
+        .then((suggestions) => setSuggestions(suggestions.data.suggestions))
         .catch(() => setSuggestions([]));
     }, 300);
 

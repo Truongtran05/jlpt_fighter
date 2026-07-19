@@ -5,7 +5,7 @@ import { GrPrevious } from "react-icons/gr";
 import { FaX } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
-import AuthApiClient from "../api/AuthApiClient.js";
+import {updateFlashCardStatus} from "../api/services/LearningServices.js"
 
 const slideMs = 320;
 const primaryButtonStyles = {
@@ -58,9 +58,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
 
     const handleCardStatusChange = async (flashCardId, status) => {
         try {
-            const response = await AuthApiClient.patch(`/flashcards/${flashCardId}/status/`,{
-                'status' : status
-            });
+            const response = await updateFlashCardStatus(flashCardId, {"status": status});
             onStatusUpdated?.(response.data);
         } catch (error) {
             console.error("Error updating flash card status:", error);
@@ -96,7 +94,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
                     width="100%"
                     maxW="420px"
                 >
-                    <FlashCard flashCard={currentFlashCard} />
+                    <FlashCard flashCard={currentFlashCard} isEditable={false} />
                 </Box>
                 <Button
                     {...secondaryButtonStyles}

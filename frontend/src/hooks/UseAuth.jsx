@@ -1,5 +1,5 @@
-import ApiClient from '../api/ApiClient'
 import {useState, useCallback} from 'react'
+import {loginUser,registerUser} from '../api/services/AuthServices'
 
 export default function useAuth(prefix) {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +10,12 @@ export default function useAuth(prefix) {
     setIsLoading(true);
     setError(null);
     try{
-        const apiResponse = await ApiClient.post(`/${prefix}/`, data);
+        let apiResponse;
+        if(prefix === 'login'){
+            apiResponse = await loginUser(data)
+        } else if(prefix === 'register'){
+            apiResponse = await registerUser(data)
+        }
         setResponse(apiResponse.data);
         return apiResponse.data;
     }catch (err) {

@@ -1,7 +1,7 @@
 import FullScreenVSection from "../layouts/FullScreenVSection.jsx";
 import { Box, Button, Heading, HStack, Input, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import AuthApiClient from "../api/AuthApiClient.js";
+import AuthApiClient from "../api/clients/AuthApiClient.js";
 import FlashCardSet from "../features/FlashCardSet.jsx";
 import FlashCard from "../features/FlashCard.jsx";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
@@ -320,7 +320,7 @@ export default function LearningPage() {
                                 </VStack>
                             )}
                             {selectedSuggestion && (
-                                <Text color="green.100">
+                                <Text color="#171d1a">
                                     Selected {selectedSuggestion.type}: {selectedSuggestion.text}
                                 </Text>
                             )}
@@ -382,10 +382,13 @@ export default function LearningPage() {
                             <FlashCard
                                 flashCard={flashCard}
                                 onUpdated={handleFlashCardUpdated}
+                                isEditable={isEditingSet}
                             />
+                            {isEditingSet && (
                             <Button {...destructiveButtonStyles} onClick={() => handleDeleteFlashCard(flashCard.flash_card_id)}>
                                 <MdDelete />
                             </Button>
+                            )}
                         </HStack>
                     ))}
                     </VStack>

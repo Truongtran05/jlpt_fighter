@@ -5,7 +5,7 @@ import { FaScroll, FaSearch } from "react-icons/fa"
 import { LuLogIn, LuLogOut, LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu"
 import SearchBar from "./SearchBar"
 import { AUTH_CHANGED_EVENT, clearAuthSession, getStoredUser } from "../utils/AuthStorage"
-import ApiClient from "../api/ApiClient"
+import {logoutUser} from "../api/services/AuthServices"
 
 const mainItems = [
   { name: "Explore", to: "/explore", icon: FaSearch },
@@ -30,7 +30,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
 
   const handleLogout = async () => {
     try {
-      await ApiClient.post("/logout/")
+      await logoutUser()
     } catch (error) {
       console.error("Logout failed:", error)
     } finally {
