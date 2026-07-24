@@ -1,6 +1,4 @@
-import {
-  clearAuthSession,
-} from "../../utils/AuthStorage"
+import {clearAuthSession} from "../../utils/AuthStorage"
 import {createRefreshManager} from "../core/RefreshManager"
 import {AuthEndPoints} from "../endpoints/AuthEndpoints"
 import {ClientFactory} from "../core/HttpClientFactory"

@@ -1,14 +1,15 @@
 import ApiClient from "../clients/ApiClient"
+import AuthApiClient from "../clients/AuthApiClient"
 import {AuthEndPoints} from "../endpoints/AuthEndpoints"
 
 export function loginUser(credentials){
-    return ApiClient.post(AuthEndPoints.login, credentials)
+    return AuthApiClient.post(AuthEndPoints.login, credentials)
 }
 
 export function logoutUser(){
-    return ApiClient.post(AuthEndPoints.logout)
+    return AuthApiClient.post(AuthEndPoints.logout)
 }
 
 export function registerUser(userData){
-    return ApiClient.post(AuthEndPoints.register, userData)
+    return AuthApiClient.post(AuthEndPoints.register, userData)
 }

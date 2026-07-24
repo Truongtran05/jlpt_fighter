@@ -1,4 +1,4 @@
-import {AuthApiClient} from "../clients/AuthApiClient"
+import AuthApiClient from "../clients/AuthApiClient"
 import {LearningEndPoints} from "../endpoints/LearningEndpoints"
 
 export function getFlashCardSets(userId){
