@@ -1,0 +1,93 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: jlptfighter
+          POSTGRES_USER: jlptfighter_user
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost,testserver"
+      CORS_ALLOWED_ORIGINS: "http://localhost"
+      DATABASE_URL: postgresql://jlptfighter_user:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/jlptfighter
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run backend checks
+        run: |
+          python backend/manage.py check
+          python backend/manage.py test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy backend to VPS
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: ${{ secrets.VPS_FINGERPRINT }}
+          script: |
+            set -e
+
+            cd /opt/jlptfighter
+            git pull --ff-only origin main
+
+            /opt/jlptfighter/backend/.venv/bin/pip install \
+              --disable-pip-version-check \
+              -r /opt/jlptfighter/backend/requirements.txt
+
+            cd /opt/jlptfighter/backend
+            .venv/bin/python manage.py check --deploy
+            .venv/bin/python manage.py migrate --noinput
+
+            sudo -n /usr/bin/systemctl restart jlptfighter-backend
+            /usr/bin/systemctl is-active --quiet jlptfighter-backend
+
+            curl --fail --silent --output /dev/null \
+              "https://api.jlptfighter.site/api/v1/kanji/?q=a"
+
+            echo "Backend deployed successfully"
