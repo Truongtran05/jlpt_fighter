@@ -14,6 +14,7 @@ frontend/dist-ssr/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
+frontend/scripts/
 
 # Logs
 *.log
