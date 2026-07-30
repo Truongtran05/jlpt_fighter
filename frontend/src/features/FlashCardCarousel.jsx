@@ -12,13 +12,17 @@ const primaryButtonStyles = {
     bg: "bushido.primary",
     color: "white",
     borderRadius: "8px",
-    _hover: { bg: "bushido.primaryHover", transform: "translateY(-1px)" },
+    borderWidth: "1px",
+    borderColor: "bushido.primary",
+    _hover: { bg: "bushido.primaryHover", borderWidth: "2px" },
 };
 const secondaryButtonStyles = {
-    bg: "bushido.secondarySoft",
-    color: "#0a1f15",
+    bg: "transparent",
+    color: "bushido.ink",
     borderRadius: "8px",
-    _hover: { bg: "bushido.primarySoft" },
+    borderWidth: "1px",
+    borderColor: "bushido.outline",
+    _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
 };
 
 export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) {
@@ -35,7 +39,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
     }, []);
 
     if (!currentFlashCard) {
-        return <Text color="white">This set has no flash cards.</Text>;
+        return <Text color="bushido.muted">This set has no flash cards.</Text>;
     }
 
     function move(direction) {

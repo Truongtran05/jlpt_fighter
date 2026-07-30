@@ -6,13 +6,14 @@ export default function Kanji({ kanji, onyomi = [], kunyomi = [], strokeCount, j
           bg="white" 
           color="bushido.ink" 
           borderWidth="1px" 
-          borderRadius="8px" 
+          borderRadius="4px"
           p={6}>
             <VStack 
             gap={2} 
             align="flex-start">
               <Heading 
               as="h2" 
+              fontFamily="body"
               fontSize="45px" 
               lineHeight="52px" 
               color="bushido.primary">

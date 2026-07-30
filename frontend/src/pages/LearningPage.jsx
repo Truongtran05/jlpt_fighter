@@ -34,13 +34,17 @@ export default function LearningPage() {
         bg: "bushido.primary",
         color: "white",
         borderRadius: "8px",
-        _hover: { bg: "bushido.primaryHover", transform: "translateY(-1px)" },
+        borderWidth: "1px",
+        borderColor: "bushido.primary",
+        _hover: { bg: "bushido.primaryHover", borderWidth: "2px" },
     };
     const secondaryButtonStyles = {
-        bg: "bushido.secondarySoft",
-        color: "#0a1f15",
+        bg: "transparent",
+        color: "bushido.ink",
         borderRadius: "8px",
-        _hover: { bg: "bushido.primarySoft" },
+        borderWidth: "1px",
+        borderColor: "bushido.outline",
+        _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
     };
     const destructiveButtonStyles = {
         bg: "bushido.error",
@@ -264,8 +268,11 @@ export default function LearningPage() {
                             </HStack>
                         </VStack>
                     ) : (
-                        <VStack align="stretch" gap={2}>
-                            <Heading size="lg">{selectedSet.name}<FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" /></Heading>
+                        <VStack align="stretch" gap={2} maxWidth="300px" margin="20px" backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
+                            <HStack justifyContent="left" alignItems="center">
+                                <Heading size="lg">{selectedSet.name}</Heading>
+                                <FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" />
+                            </HStack>
                             {selectedSet.description && <Text>{selectedSet.description}</Text>}
                             {isLoading && <Text>Loading flash cards...</Text>}
                             {error && <Text color="bushido.error">{error}</Text>}
@@ -298,7 +305,8 @@ export default function LearningPage() {
                                     maxHeight="200px"
                                     backgroundColor="white"
                                     width="20%"
-                                    border="1px solid #ccc"
+                                    borderWidth="1px"
+                                    borderColor="bushido.outline"
                                     zIndex={1000}
                                 >
                                     {suggestions.map((suggestion) => (
@@ -311,7 +319,7 @@ export default function LearningPage() {
                                             }}
                                             padding="8px"
                                             cursor="pointer"
-                                            _hover={{ backgroundColor: 'gray.100' }}
+                                            _hover={{ backgroundColor: 'bushido.surfaceLow' }}
                                         >
                                             <Text color="black">{suggestion.text}</Text>
                                             <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
@@ -320,7 +328,7 @@ export default function LearningPage() {
                                 </VStack>
                             )}
                             {selectedSuggestion && (
-                                <Text color="#171d1a">
+                                <Text color="bushido.ink">
                                     Selected {selectedSuggestion.type}: {selectedSuggestion.text}
                                 </Text>
                             )}

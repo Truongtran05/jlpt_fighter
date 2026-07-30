@@ -30,11 +30,11 @@ export default function SearchBar() {
       <HStack gap={1}>
         {modes.map((item) => <Button key={item} size="sm" variant="ghost" bg={mode === item ? "bushido.secondarySoft" : "transparent"} color={mode === item ? "bushido.primary" : "bushido.muted"} onClick={() => navigate(`/${item}`)} textTransform="capitalize">{item}</Button>)}
       </HStack>
-      <Input type="search" aria-label={`Search ${mode}`} placeholder={`Search ${mode}...`} value={searchQuery} onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleSearch()} color="bushido.ink" backgroundColor="white" />
-      <Button type="button" bg="bushido.primary" color="white" onClick={() => handleSearch()}>Search</Button>
+      <Input type="search" aria-label={`Search ${mode}`} placeholder={`Search ${mode}...`} value={searchQuery} onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleSearch()} color="bushido.ink" backgroundColor="white" borderColor="bushido.outline" borderRadius="4px" _focusVisible={{ borderColor: "bushido.primary", outlineColor: "bushido.primarySoft" }} />
+      <Button type="button" bg="bushido.primary" color="white" borderRadius="8px" borderWidth="1px" borderColor="bushido.primary" _hover={{ bg: "bushido.primaryHover", borderWidth: "2px" }} onClick={() => handleSearch()}>Search</Button>
 
       {isSuggestionsOpen && suggestions.length > 0 && (
-        <VStack align="stretch" gap={0} position="absolute" top="100%" left={{ base: 0, md: "230px" }} right="84px" overflowY="auto" maxHeight="240px" backgroundColor="white" borderWidth="1px" borderRadius="8px" zIndex={1000}>
+        <VStack align="stretch" gap={0} position="absolute" top="100%" left={{ base: 0, md: "230px" }} right="84px" overflowY="auto" maxHeight="240px" backgroundColor="white" borderWidth="1px" borderRadius="4px" zIndex={1000}>
           {suggestions.filter((suggestion) => suggestion.type === mode).map((suggestion) => (
             <Box key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`} onClick={() => { setSearchQuery(suggestion.text); setIsSuggestionsOpen(false); handleSearch(suggestion.text) }} padding="8px" cursor="pointer" _hover={{ backgroundColor: "bushido.surfaceLow" }}>
               <Text color="bushido.ink">{suggestion.text}</Text>
