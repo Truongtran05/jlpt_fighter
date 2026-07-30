@@ -215,3 +215,4 @@ class UpdateFlashCardStatusView(APIView):
         flash_card.status = status_value
         flash_card.save(update_fields=["status"])
         return Response(FlashCardDetailSerializer(flash_card).data)
+
