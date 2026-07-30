@@ -69,7 +69,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
               const Icon = item.icon
               return (
                 <Link key={item.name} to={item.to} aria-label={item.name} title={isCollapsed ? item.name : undefined}>
-                  <HStack justify={isCollapsed ? "center" : "flex-start"} p="11px 14px" borderRadius="8px" fontWeight="500" color={active ? "bushido.primary" : "bushido.muted"} bg={active ? "bushido.secondarySoft" : "transparent"} _hover={{ bg: "bushido.surfaceLow", color: "bushido.primary" }}>
+                  <HStack justify={isCollapsed ? "center" : "flex-start"} p="11px 14px" borderRadius="4px" fontWeight="500" color={active ? "bushido.primary" : "bushido.muted"} bg={active ? "bushido.secondarySoft" : "transparent"} _hover={{ bg: "bushido.surfaceLow", color: "bushido.primary" }}>
                     <Icon />
                     {!isCollapsed && <Text>{item.name}</Text>}
                   </HStack>

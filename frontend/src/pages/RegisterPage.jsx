@@ -64,10 +64,10 @@ export default function RegisterPage() {
         width="100%"
         maxWidth="420px"
         backgroundColor="white"
-        color="gray.900"
-        borderRadius="8px"
+        color="bushido.ink"
+        borderRadius="4px"
+        borderWidth="1px"
         padding={8}
-        boxShadow="0 18px 45px rgba(0, 0, 0, 0.28)"
       >
         <VStack gap={5} align="stretch">
           <VStack gap={2} align="stretch">
@@ -133,7 +133,8 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            colorPalette="green"
+            backgroundColor="bushido.primary"
+            color="white"
             loading={isRegisterLoading || isLoginLoading}
             loadingText="Creating account"
           >

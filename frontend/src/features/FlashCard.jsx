@@ -14,13 +14,17 @@ const primaryButtonStyles = {
   bg: "bushido.primary",
   color: "white",
   borderRadius: "8px",
-  _hover: { bg: "bushido.primaryHover", transform: "translateY(-1px)" },
+  borderWidth: "1px",
+  borderColor: "bushido.primary",
+  _hover: { bg: "bushido.primaryHover", borderWidth: "2px" },
 };
 const secondaryButtonStyles = {
-  bg: "bushido.secondarySoft",
-  color: "#0a1f15",
+  bg: "transparent",
+  color: "bushido.ink",
   borderRadius: "8px",
-  _hover: { bg: "bushido.primarySoft" },
+  borderWidth: "1px",
+  borderColor: "bushido.outline",
+  _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
 };
 
 function asList(value) {
@@ -141,7 +145,7 @@ export default function FlashCard({ flashCard, onUpdated , isEditable}) {
         >
           <CardFace>
             <HStack justify="space-between" width="100%">
-              <Text fontSize="sm" color="bushido.muted">
+              <Text fontFamily="mono" fontSize="12px" letterSpacing="0.05em" color="bushido.muted">
                 {cardType}
               </Text>
               {isEditable && (
@@ -160,14 +164,14 @@ export default function FlashCard({ flashCard, onUpdated , isEditable}) {
                 </Button>
               )}
             </HStack>
-            <Heading size="3xl" textAlign="center" color="bushido.ink" noOfLines={2}>
+            <Heading size="3xl" fontFamily="body" textAlign="center" color="bushido.ink" noOfLines={2}>
               {content.front}
             </Heading>
             <HStack justify="space-between" width="100%">
               <Text fontSize="sm" color="bushido.muted">
                 Click to flip
               </Text>
-              {flashCard.status === "remembered" ? (<BsFillBookmarkCheckFill color="#174b34" />) : (<BsBookmarkDashFill color="#ba1a1a" />)}
+              {flashCard.status === "remembered" ? (<BsFillBookmarkCheckFill color="#93d5af" />) : (<BsBookmarkDashFill color="#404942" />)}
             </HStack>
           </CardFace>
 
@@ -221,9 +225,8 @@ function CardEditForm({onSubmit, onCancel }) {
         gap={4}
         p={6}
         borderWidth="1px"
-        borderRadius="md"
+        borderRadius="4px"
         bg="white"
-        boxShadow="md"
         backfaceVisibility="hidden"
         as="form"
         onSubmit={(e) => {
@@ -251,7 +254,8 @@ function CardEditForm({onSubmit, onCancel }) {
                 overflowY="auto"
                 maxHeight="200px"
                 backgroundColor="white"
-                border="1px solid #ccc"
+                borderWidth="1px"
+                borderColor="bushido.outline"
                 zIndex={1000}
             >
                 {suggestions.map((suggestion) => (
@@ -264,7 +268,7 @@ function CardEditForm({onSubmit, onCancel }) {
                         }}
                         padding="8px"
                         cursor="pointer"
-                        _hover={{ backgroundColor: 'gray.100' }}
+                        _hover={{ backgroundColor: 'bushido.surfaceLow' }}
                     >
                         <Text color="black">{suggestion.text}</Text>
                         <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
@@ -295,9 +299,8 @@ function CardFace({ children, transform = "rotateX(0deg)" }) {
       gap={4}
       p={6}
       borderWidth="1px"
-      borderRadius="md"
-      bg="white"
-      boxShadow="md"
+      borderRadius="4px"
+      bg={transform === "rotateX(0deg)" ? "white" : "bushido.surfaceLow"}
       backfaceVisibility="hidden"
       transform={transform}
     >
