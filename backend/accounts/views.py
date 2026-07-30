@@ -4,9 +4,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
 from .models import User
 from .serializers import UserSerializer
 from rest_framework.permissions import AllowAny
+from django.utils import timezone
 
 
 # Create your views here. 
@@ -34,6 +36,9 @@ class LoginView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
 
         #tokens are sented as cookies to the client
         response.set_cookie(
@@ -66,8 +71,26 @@ class LogoutView(APIView):
         return response
 
 class UserView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
-        pass    
+        user = request.user
+        serializer = UserSerializer(user)
+        base_user_data = serializer.data
+        user_progress_data = {
+            "total_flashcard_sets": user.flash_card_sets.filter(deleted_at__isnull=True).count(),
+            "total_flashcards": sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True).count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+            "total_completed_flashcards" : sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True, status="remembered").count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+            "total_incomplete_flashcards": sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True, status="forgotten").count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+            "total_kanji_flashcards": sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True, type="kanji").count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+            "total_vocabulary_flashcards": sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True, type="vocab").count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+            "total_grammar_flashcards": sum(flash_card_set.flash_cards.filter(deleted_at__isnull=True, type="grammar").count() for flash_card_set in user.flash_card_sets.filter(deleted_at__isnull=True)),
+        }
+        account_data = {
+            "account_created_at": User.objects.filter(id=user.id).values_list('date_joined', flat=True).first(),
+            "last_login": User.objects.filter(id=user.id).values_list('last_login', flat=True).first(),
+        }
+        return Response({**base_user_data, **user_progress_data, **account_data}, status=status.HTTP_200_OK)
+
 
 class CookiesTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
