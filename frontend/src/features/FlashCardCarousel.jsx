@@ -1,5 +1,5 @@
 ﻿import FlashCard from "./FlashCard.jsx";
-import {Box, Button, HStack, VStack, Text} from "@chakra-ui/react";
+import {Box, Button, Dialog, HStack, Portal, VStack, Text} from "@chakra-ui/react";
 import { GrNext } from "react-icons/gr";
 import { GrPrevious } from "react-icons/gr";
 import { FaX } from "react-icons/fa6";
@@ -25,13 +25,23 @@ const secondaryButtonStyles = {
     _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
 };
 
-export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) {
+const ghostButtonStyles = {
+    bg: "transparent",
+    color: "bushido.ink",
+    borderRadius: "8px",
+    borderWidth: "0px",
+    _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" , borderWidth: "1px"},
+};
+
+export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, onEndSession }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slideDirection, setSlideDirection] = useState(null);
     const [isEntering, setIsEntering] = useState(false);
     const slideTimeout = useRef(null);
     const enterFrame = useRef(null);
     const currentFlashCard = flashCards[Math.min(currentIndex, flashCards.length - 1)];
+    const [progressCount, setProgressCount] = useState(1);
+    const [isComplete, setIsComplete] = useState(false);
 
     useEffect(() => () => {
         clearTimeout(slideTimeout.current);
@@ -43,6 +53,8 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
     }
 
     function move(direction) {
+        direction === "next" ? setProgressCount((prev) => Math.min(prev + 1, flashCards.length)) : setProgressCount((prev) => Math.max(prev - 1, 0));
+        // console.log("Progress Count:", progressCount, "Current Index:", currentIndex, "Flash Cards Length:", flashCards.length);
         if (
             slideDirection ||
             (direction === "prev" && currentIndex === 0) ||
@@ -64,20 +76,37 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
         try {
             const response = await updateFlashCardStatus(flashCardId, {"status": status});
             onStatusUpdated?.(response.data);
+            if (currentIndex === flashCards.length - 1) {
+                setProgressCount(flashCards.length);
+                setIsComplete(true);
+            } else {
+                move("next");
+            }
         } catch (error) {
             console.error("Error updating flash card status:", error);
-        } finally{
-            move("next");
         }
+    };
+
+    const restart = () => {
+        setCurrentIndex(0);
+        setProgressCount(1);
+        setIsComplete(false);
     };
 
     return (
         <VStack spacing={4} width="100%" align="center">
-            <HStack spacing={4} py={4} width="100%" justify="center">
+            <Box width="100%" maxW="420px" h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label="Remembered flashcards" aria-valuemin={0} aria-valuemax={Math.max(flashCards.length, 1)} aria-valuenow={progressCount}>
+                <Box h="100%" w={`${(progressCount / Math.max(flashCards.length, 1)) * 100}%`} bg="bushido.primary" transition="width .2s ease" />
+            </Box>
+            <HStack gap={0} py={4} width="100%" justify="center" position="relative">
                 <Button
-                    {...secondaryButtonStyles}
+                    {...ghostButtonStyles}
                     onClick={() => move("prev")}
                     disabled={currentIndex === 0 || slideDirection !== null}
+                    minHeight="260px"
+                    position={{ base: "absolute", md: "static" }}
+                    left={{ base: 0, md: "auto" }}
+                    zIndex={1}
                 >
                     <GrPrevious />
                 </Button>
@@ -101,9 +130,13 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
                     <FlashCard flashCard={currentFlashCard} isEditable={false} />
                 </Box>
                 <Button
-                    {...secondaryButtonStyles}
+                    {...ghostButtonStyles}
                     onClick={() => move("next")}
                     disabled={currentIndex === flashCards.length - 1 || slideDirection !== null}
+                    minHeight="260px"
+                    position={{ base: "absolute", md: "static" }}
+                    right={{ base: 0, md: "auto" }}
+                    zIndex={1}
                 >
                     <GrNext />
                 </Button>
@@ -122,6 +155,25 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated }) 
                     <FaX />
                 </Button>
             </HStack>
+            <Dialog.Root open={isComplete} closeOnEscape={false} closeOnInteractOutside={false}>
+                <Portal>
+                    <Dialog.Backdrop backdropFilter="blur(8px)" />
+                    <Dialog.Positioner>
+                        <Dialog.Content bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
+                            <Dialog.Header>
+                                <Dialog.Title>Session complete</Dialog.Title>
+                            </Dialog.Header>
+                            <Dialog.Body>
+                                <Text color="bushido.muted">You have reviewed every flashcard in this session.</Text>
+                            </Dialog.Body>
+                            <Dialog.Footer>
+                                <Button {...secondaryButtonStyles} onClick={onEndSession}>End session</Button>
+                                <Button {...primaryButtonStyles} onClick={restart}>Restart</Button>
+                            </Dialog.Footer>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
         </VStack>
     )
 }
