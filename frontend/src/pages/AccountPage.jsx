@@ -92,7 +92,7 @@ export default function AccountPage() {
 
       <Box display="grid" gridTemplateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap={4}>
         {stats.map(({ label, value = 0, note, icon: Icon }) => (
-          <Box key={label} bg="white" borderWidth="1px" borderLeftWidth="3px" borderLeftColor="bushido.primary" borderRadius="4px" p={5}>
+          <Box key={label} bg="white" borderWidth="1px" borderLeftWidth="3px" borderLeftColor="bushido.primary" borderRadius="4px" p={5} _hover={{"transform": "translateY(-1px)", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"}} transition="all .2s">
             <HStack justify="space-between" color="bushido.muted"><Text fontFamily="mono" fontSize="12px" letterSpacing="0.05em">{label.toUpperCase()}</Text><Icon /></HStack>
             <Text fontFamily="heading" fontSize="32px" lineHeight="40px" fontWeight="700" mt={3}>{value}</Text>
             <Text color="bushido.muted" fontSize="13px" mt={1}>{note}</Text>
@@ -101,14 +101,14 @@ export default function AccountPage() {
       </Box>
 
       <Box display="grid" gridTemplateColumns={{ base: "1fr", lg: "minmax(0, 2fr) minmax(280px, 1fr)" }} gap={6} alignItems="start">
-        <Box bg="white" borderWidth="1px" borderRadius="4px" p={{ base: 5, md: 6 }}>
+        <Box bg="white" borderWidth="1px" borderRadius="4px" p={{ base: 5, md: 6 }} _hover={{"transform": "translateY(-1px)", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"}} transition="all .2s">
           <Heading as="h2" fontSize="20px" lineHeight="28px">Library progress</Heading>
           <Text color="bushido.muted" fontSize="14px" mt={1}>Breakdown of your {totalCards} flashcards</Text>
-          <VStack align="stretch" gap={5} mt={6}>
+          <VStack align="stretch" gap={5} mt={6} >
             {categories.map(({ label, value = 0, icon: Icon }) => {
               const percentage = totalCards ? Math.round((value / totalCards) * 100) : 0
               return (
-                <Box key={label}>
+                <Box key={label} >
                   <HStack justify="space-between" mb={2}>
                     <HStack color="bushido.ink"><Icon /><Text fontWeight="600">{label}</Text></HStack>
                     <Text fontFamily="mono" fontSize="12px" color="bushido.muted">{value} CARDS · {percentage}%</Text>
@@ -121,7 +121,7 @@ export default function AccountPage() {
         </Box>
 
         <VStack align="stretch" gap={4}>
-          <Box bg="white" borderWidth="1px" borderRadius="4px" p={5}>
+          <Box bg="white" borderWidth="1px" borderRadius="4px" p={5} _hover={{"transform": "translateY(-1px)", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"}} transition="all .2s">
             <Heading as="h2" fontSize="20px" lineHeight="28px">Account</Heading>
             <VStack align="stretch" gap={4} mt={5}>
               <HStack align="flex-start"><Box color="bushido.primary" pt={1}><LuUserRound /></Box><Box minW={0}><Text fontSize="12px" fontFamily="mono" color="bushido.muted">EMAIL</Text><Text truncate>{accountData.email}</Text></Box></HStack>
