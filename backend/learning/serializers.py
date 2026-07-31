@@ -56,3 +56,12 @@ class FlashCardSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Flash_card_set
         fields = ['flash_card_set_id', 'name', 'description', 'visibility']
+
+    def to_representation(self, flash_card_set):
+        data = super().to_representation(flash_card_set)
+        data.update({
+            "total_flash_cards": flash_card_set.flash_cards.filter(deleted_at__isnull=True).count(),
+            "total_remembered_flash_cards": flash_card_set.flash_cards.filter(deleted_at__isnull=True, status='remembered').count(),
+            "total_forgotten_flash_cards": flash_card_set.flash_cards.filter(deleted_at__isnull=True, status='forgotten').count(),
+        })
+        return data

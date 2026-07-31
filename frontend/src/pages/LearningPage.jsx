@@ -6,7 +6,6 @@ import FlashCardSet from "../features/FlashCardSet.jsx";
 import FlashCard from "../features/FlashCard.jsx";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
 import FlashCardCarousel from "../features/FlashCardCarousel.jsx";
-import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import {getStoredUser} from "../utils/AuthStorage.js"
 import { useNavigate } from "react-router-dom";
@@ -268,7 +267,8 @@ export default function LearningPage() {
                             </HStack>
                         </VStack>
                     ) : (
-                        <VStack align="stretch" gap={2} maxWidth="300px" margin="20px" backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
+                        <HStack position="relative" width="100%">
+                        <VStack align="stretch" alignSelf="flex-end" maxWidth="fit-content" margin="20px" backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
                             <HStack justifyContent="left" alignItems="center">
                                 <Heading size="lg">{selectedSet.name}</Heading>
                                 <FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" />
@@ -279,7 +279,25 @@ export default function LearningPage() {
                             {!isLoading && !error && flashCards.length === 0 && (
                                 <Text>This set has no flash cards.</Text>
                             )}
+                            {!isLoading && !error && (
+                                <HStack gap={6} pt={2} borderTopWidth="1px" borderColor="bushido.outlineVariant">
+                                    {[
+                                        ["Total", flashCards.length, "bushido.ink"],
+                                        ["Remembered", flashCards.filter((card) => card.status === "remembered").length, "bushido.primary"],
+                                        ["Forgotten", flashCards.filter((card) => card.status === "forgotten").length, "bushido.tertiary"],
+                                    ].map(([label, value, color]) => (
+                                        <VStack key={label} align="flex-start" gap={0}>
+                                            <Text fontFamily="mono" fontSize="12px" color="bushido.muted">{label}</Text>
+                                            <Text fontFamily="heading" fontSize="20px" fontWeight="600" color={color}>{value}</Text>
+                                        </VStack>
+                                    ))}
+                                </HStack>
+                            )}
                         </VStack>
+                        <Button {...primaryButtonStyles} type="button" position="absolute" left="50%" transform="translateX(-50%)" onClick={handleStartLearning}>
+                            Practice !
+                        </Button>
+                        </HStack>
                     )}
                     {isNewCardFormOpen ? (
                         <VStack as="form" onSubmit={handleSubmitNewFlashCard} align="stretch" gap={3} position="relative">
@@ -347,9 +365,26 @@ export default function LearningPage() {
                                 <Button {...secondaryButtonStyles} alignSelf="flex-start" onClick={handleBackToSets}>
                                     Back to flashcard sets
                                 </Button>
-                                <Button {...primaryButtonStyles} type="button" alignSelf="center" onClick={handleStartLearning}>
-                                    StartLearning
+                            <HStack justify="center" gap = {4}>
+                                <Button
+                                    {...(currentCardMode === "remembered" ? primaryButtonStyles : secondaryButtonStyles)}
+                                    onClick={() => setCurrentCardMode("remembered")}
+                                >
+                                    Remembered
                                 </Button>
+                                <Button
+                                    {...(currentCardMode === "all" ? primaryButtonStyles : secondaryButtonStyles)}
+                                    onClick={() => setCurrentCardMode("all")}
+                                >
+                                    All
+                                </Button>
+                                <Button
+                                    {...(currentCardMode === "forgotten" ? primaryButtonStyles : secondaryButtonStyles)}
+                                    onClick={() => setCurrentCardMode("forgotten")}
+                                >
+                                    Forgotten
+                                </Button>
+                            </HStack>
                                 <Button {...primaryButtonStyles} alignSelf="flex-end" onClick={handleNewFlashCard}>
                                     New FlashCard
                                 </Button>
@@ -357,26 +392,6 @@ export default function LearningPage() {
                         )}
                     {
                     <VStack align="center" gap={4}>
-                    <HStack justify="center" gap = {4}>
-                        <Button
-                            {...(currentCardMode === "remembered" ? primaryButtonStyles : secondaryButtonStyles)}
-                            onClick={() => setCurrentCardMode("remembered")}
-                        >
-                            Remembered
-                        </Button>
-                        <Button
-                            {...(currentCardMode === "all" ? primaryButtonStyles : secondaryButtonStyles)}
-                            onClick={() => setCurrentCardMode("all")}
-                        >
-                            All
-                        </Button>
-                        <Button
-                            {...(currentCardMode === "forgotten" ? primaryButtonStyles : secondaryButtonStyles)}
-                            onClick={() => setCurrentCardMode("forgotten")}
-                        >
-                            Forgotten
-                        </Button>
-                    </HStack>
                     {!isLoading && !error && flashCards.filter((flashCard) => {
                         if (currentCardMode === "remembered") {
                             return flashCard.status === "remembered";
@@ -390,13 +405,9 @@ export default function LearningPage() {
                             <FlashCard
                                 flashCard={flashCard}
                                 onUpdated={handleFlashCardUpdated}
-                                isEditable={isEditingSet}
+                                onDelete={() => handleDeleteFlashCard(flashCard.flash_card_id)}
+                                isEditable={!isLearningSessionActive}
                             />
-                            {isEditingSet && (
-                            <Button {...destructiveButtonStyles} onClick={() => handleDeleteFlashCard(flashCard.flash_card_id)}>
-                                <MdDelete />
-                            </Button>
-                            )}
                         </HStack>
                     ))}
                     </VStack>
