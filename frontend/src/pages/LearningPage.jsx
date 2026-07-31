@@ -1,5 +1,5 @@
 import FullScreenVSection from "../layouts/FullScreenVSection.jsx";
-import { Box, Button, Heading, HStack, Input, Text, Textarea, VStack } from "@chakra-ui/react";
+import { Box, Button, Heading, HStack, Input, Text, Textarea, VStack , SimpleGrid} from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import AuthApiClient from "../api/clients/AuthApiClient.js";
 import FlashCardSet from "../features/FlashCardSet.jsx";
@@ -45,13 +45,6 @@ export default function LearningPage() {
         borderColor: "bushido.outline",
         _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
     };
-    const destructiveButtonStyles = {
-        bg: "bushido.error",
-        color: "white",
-        borderRadius: "8px",
-        _hover: { bg: "#8f1414", transform: "translateY(-1px)" },
-    };
-
     useEffect(() => {
         const fetchFlashCardSets = async () => {
             try {
@@ -228,7 +221,7 @@ export default function LearningPage() {
         <FullScreenVSection
         backgroundColor="bushido.surface"
         isDarkBackground={true}
-        gap={6} align="stretch" width="100%" paddingX={6} justifyContent="flex-start" overflowY="auto"
+        gap={6} align="stretch" width="100%" paddingX={{ base: 4, md: 6 }} justifyContent="flex-start" overflowY="auto"
         >
             {isLearningSessionActive ? (
                 <VStack align="center" gap={4}>
@@ -236,7 +229,7 @@ export default function LearningPage() {
                     <Button {...secondaryButtonStyles} onClick={() => setIsLearningSessionActive(false)}>End Session</Button>
                     {isLoading && <Text color="bushido.muted">Loading flash cards...</Text>}
                     {error && <Text color="bushido.error">{error}</Text>}
-                    <FlashCardCarousel flashCards={flashCards} onStatusUpdated={handleFlashCardUpdated} />
+                    <FlashCardCarousel flashCards={flashCards} onStatusUpdated={handleFlashCardUpdated} onEndSession={() => setIsLearningSessionActive(false)} />
                 </VStack>
             ) : (
             selectedSet ? (
@@ -247,6 +240,7 @@ export default function LearningPage() {
                             onSubmit={(e) => handleEditFlashCardSet(e, selectedSet)} 
                             align="stretch" 
                             gap={3}
+                            width="100%"
                             maxWidth="300px"
                         >
                             <Input
@@ -267,8 +261,8 @@ export default function LearningPage() {
                             </HStack>
                         </VStack>
                     ) : (
-                        <HStack position="relative" width="100%">
-                        <VStack align="stretch" alignSelf="flex-end" maxWidth="fit-content" margin="20px" backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
+                        <HStack position="relative" width="100%" flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "stretch", md: "center" }}>
+                        <VStack align="stretch" alignSelf={{ base: "stretch", md: "flex-end" }} maxWidth={{ base: "100%", md: "fit-content" }} margin={{ base: 0, md: "20px" }} backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
                             <HStack justifyContent="left" alignItems="center">
                                 <Heading size="lg">{selectedSet.name}</Heading>
                                 <FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" />
@@ -280,7 +274,7 @@ export default function LearningPage() {
                                 <Text>This set has no flash cards.</Text>
                             )}
                             {!isLoading && !error && (
-                                <HStack gap={6} pt={2} borderTopWidth="1px" borderColor="bushido.outlineVariant">
+                                <HStack gap={{ base: 4, sm: 6 }} flexWrap="wrap" pt={2} borderTopWidth="1px" borderColor="bushido.outlineVariant">
                                     {[
                                         ["Total", flashCards.length, "bushido.ink"],
                                         ["Remembered", flashCards.filter((card) => card.status === "remembered").length, "bushido.primary"],
@@ -294,7 +288,7 @@ export default function LearningPage() {
                                 </HStack>
                             )}
                         </VStack>
-                        <Button {...primaryButtonStyles} type="button" position="absolute" left="50%" transform="translateX(-50%)" onClick={handleStartLearning}>
+                        <Button {...primaryButtonStyles} type="button" position={{ base: "static", md: "absolute" }} left={{ md: "50%" }} transform={{ md: "translateX(-50%)" }} width={{ base: "100%", md: "auto" }} onClick={handleStartLearning}>
                             Practice !
                         </Button>
                         </HStack>
@@ -308,7 +302,7 @@ export default function LearningPage() {
                                 onChange={handleNewFlashCardChange}
                                 backgroundColor="white"
                                 color="gray.900"
-                                width="20%"
+                                width={{ base: "100%", md: "320px" }}
                                 required
                             />
                             {isSuggestionsOpen && suggestions.length > 0 && (
@@ -322,7 +316,7 @@ export default function LearningPage() {
                                     overflowY="auto"
                                     maxHeight="200px"
                                     backgroundColor="white"
-                                    width="20%"
+                                    width={{ base: "100%", md: "320px" }}
                                     borderWidth="1px"
                                     borderColor="bushido.outline"
                                     zIndex={1000}
@@ -351,7 +345,7 @@ export default function LearningPage() {
                                 </Text>
                             )}
                             
-                            <HStack>
+                            <HStack flexWrap="wrap">
                                 <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating" disabled={!selectedSuggestion}>
                                     Create FlashCard
                                 </Button>
@@ -361,11 +355,11 @@ export default function LearningPage() {
                             </HStack>
                         </VStack>
                         ) :(
-                            <HStack justifyContent="space-between" alignItems="center">
-                                <Button {...secondaryButtonStyles} alignSelf="flex-start" onClick={handleBackToSets}>
+                            <HStack justifyContent="space-between" alignItems={{ base: "stretch", lg: "center" }} flexDirection={{ base: "column", lg: "row" }}>
+                                <Button {...secondaryButtonStyles} width={{ base: "100%", sm: "auto" }} alignSelf={{ base: "stretch", sm: "flex-start" }} onClick={handleBackToSets}>
                                     Back to flashcard sets
                                 </Button>
-                            <HStack justify="center" gap = {4}>
+                            <HStack justify="center" gap={{ base: 2, sm: 4 }} flexWrap="wrap">
                                 <Button
                                     {...(currentCardMode === "remembered" ? primaryButtonStyles : secondaryButtonStyles)}
                                     onClick={() => setCurrentCardMode("remembered")}
@@ -385,7 +379,7 @@ export default function LearningPage() {
                                     Forgotten
                                 </Button>
                             </HStack>
-                                <Button {...primaryButtonStyles} alignSelf="flex-end" onClick={handleNewFlashCard}>
+                                <Button {...primaryButtonStyles} width={{ base: "100%", sm: "auto" }} alignSelf={{ base: "stretch", sm: "flex-end" }} onClick={handleNewFlashCard}>
                                     New FlashCard
                                 </Button>
                             </HStack>
@@ -415,11 +409,11 @@ export default function LearningPage() {
                 </VStack>
             ) : (
                 <VStack align="stretch" gap={4}>
-                <HStack justifyContent="space-between" alignItems="center">
+                <HStack justifyContent="space-between" alignItems={{ base: "stretch", sm: "center" }} flexDirection={{ base: "column", sm: "row" }}>
                     <Text as="h1" fontSize="2xl" fontWeight="bold">
                         My Flashcard sets 
                     </Text>
-                    <Button {...primaryButtonStyles} onClick={handleNewFlashCardSet}>New Flashcard Set</Button>
+                    <Button {...primaryButtonStyles} width={{ base: "100%", sm: "auto" }} onClick={handleNewFlashCardSet}>New Flashcard Set</Button>
                 </HStack>
                 {isNewSetFormOpen && (
                     <VStack as="form" onSubmit={handleSubmitNewFlashCardSet} align="stretch" gap={3}>
@@ -430,7 +424,7 @@ export default function LearningPage() {
                             onChange={(event) => setNewSet((set) => ({ ...set, name: event.target.value }))}
                             backgroundColor="white"
                             color="gray.900"
-                            width="20%"
+                            width={{ base: "100%", md: "320px" }}
                             required
                         />
                         <Textarea
@@ -439,10 +433,10 @@ export default function LearningPage() {
                             value={newSet.description}
                             onChange={(event) => setNewSet((set) => ({ ...set, description: event.target.value }))}
                             backgroundColor="white"
-                            width="20%"
+                            width={{ base: "100%", md: "320px" }}
                             color="gray.900"
                         />
-                        <HStack>
+                        <HStack flexWrap="wrap">
                             <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating">
                                 Submit
                             </Button>
@@ -453,6 +447,7 @@ export default function LearningPage() {
                     </VStack>
                 )}
                 {error && <Text color="bushido.error">{error}</Text>}
+                <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={4} gridAutoRows="1fr">
                 {flashCardSets.map((flashCardSet) => (
                     <FlashCardSet
                         key={flashCardSet.flash_card_set_id}
@@ -460,6 +455,7 @@ export default function LearningPage() {
                         onClick={handleSelectSet}
                     />
                 ))}
+                </SimpleGrid>
                 </VStack>
             )
             )}
