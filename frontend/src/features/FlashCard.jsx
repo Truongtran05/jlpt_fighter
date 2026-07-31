@@ -4,6 +4,8 @@ import AuthApiClient from "../api/clients/AuthApiClient.js";
 import { FaEdit} from "react-icons/fa";
 import { BsFillBookmarkCheckFill,  BsBookmarkDashFill } from "react-icons/bs";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
+import { MdDelete } from "react-icons/md";
+
 
 const typeLabels = {
   kanji: "Kanji",
@@ -19,12 +21,19 @@ const primaryButtonStyles = {
   _hover: { bg: "bushido.primaryHover", borderWidth: "2px" },
 };
 const secondaryButtonStyles = {
-  bg: "transparent",
-  color: "bushido.ink",
-  borderRadius: "8px",
-  borderWidth: "1px",
+  bg: "white",
+  color: "bushido.primary",
   borderColor: "bushido.outline",
-  _hover: { bg: "bushido.surfaceLow", borderColor: "bushido.primary" },
+  _hover: { bg: "bushido.surfaceLow" },
+  size: "sm"
+};
+const destructiveButtonStyles = {
+    bg: "bushido.tertiary",
+    color: "white",
+    borderRadius: "8px",
+    borderWidth: "1px",
+    borderColor: "bushido.tertiary",
+    _hover: { bg: "bushido.tertiaryHover", borderWidth: "2px" },
 };
 
 function asList(value) {
@@ -82,7 +91,7 @@ function getCardContent(flashCard) {
   };
 }
 
-export default function FlashCard({ flashCard, onUpdated , isEditable}) {
+export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -148,13 +157,12 @@ export default function FlashCard({ flashCard, onUpdated , isEditable}) {
               <Text fontFamily="mono" fontSize="12px" letterSpacing="0.05em" color="bushido.muted">
                 {cardType}
               </Text>
+              <Text fontSize="sm" color="bushido.muted">
+                Click to flip
+              </Text>
               {isEditable && (
                 <Button
-                  bg="white"
-                  color="bushido.primary"
-                  borderColor="bushido.outline"
-                  _hover={{ bg: "bushido.surfaceLow" }}
-                  size="sm"
+                  {...secondaryButtonStyles}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleEdit();
@@ -168,10 +176,15 @@ export default function FlashCard({ flashCard, onUpdated , isEditable}) {
               {content.front}
             </Heading>
             <HStack justify="space-between" width="100%">
-              <Text fontSize="sm" color="bushido.muted">
-                Click to flip
-              </Text>
-              {flashCard.status === "remembered" ? (<BsFillBookmarkCheckFill color="#93d5af" />) : (<BsBookmarkDashFill color="#404942" />)}
+              {isEditable && (
+                <Button {...secondaryButtonStyles} onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}>
+                  <MdDelete />
+                </Button>
+              )}
+              {flashCard.status === "remembered" ? (<Text color="bushido.primary"><BsFillBookmarkCheckFill/></Text>) : (<Text  color="bushido.tertiary"><BsBookmarkDashFill /></Text>)}
             </HStack>
           </CardFace>
 
