@@ -1,5 +1,5 @@
 import FullScreenVSection from "../layouts/FullScreenVSection.jsx";
-import { Box, Button, Heading, HStack, Input, Text, Textarea, VStack , SimpleGrid} from "@chakra-ui/react";
+import { Box, Button, Dialog, Heading, HStack, IconButton, Input, Portal, SimpleGrid, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import AuthApiClient from "../api/clients/AuthApiClient.js";
 import FlashCardSet from "../features/FlashCardSet.jsx";
@@ -10,8 +10,10 @@ import { FaEdit } from "react-icons/fa";
 import {getStoredUser} from "../utils/AuthStorage.js"
 import { useNavigate } from "react-router-dom";
 import { toaster } from "../components/ui/toaster.jsx";
+import { useLanguage } from "../contexts/LanguageContext.jsx";
 
 export default function LearningPage() {
+    const { language, t } = useLanguage();
     const navigate = useNavigate();
     const [flashCardSets, setFlashCardSets] = useState([]);
     const [selectedSet, setSelectedSet] = useState(null);
@@ -25,6 +27,8 @@ export default function LearningPage() {
     const [selectedSuggestion, setSelectedSuggestion] = useState(null);
     const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
     const [isEditingSet, setIsEditingSet] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formError, setFormError] = useState(null);
     const [isLearningSessionActive, setIsLearningSessionActive] = useState(false);
     const suggestions = useSuggestions(newCardQuery);
     const currentUser = getStoredUser();
@@ -61,20 +65,22 @@ export default function LearningPage() {
     useEffect(() => {
         if(!currentUser) {
             toaster.create({
-                title: "Login required",
-                description: "Please log in to access your flashcard sets.",
+                title: t("Login required"),
+                description: t("Please log in to access your flashcard sets."),
                 type: "warning",
             });
             navigate("/login");
         }
-    }, [currentUser, navigate]);
+    }, [currentUser, navigate, t]);
 
     const loadFlashCards = async (flashCardSet) => {
         setFlashCards([]);
         setIsLoading(true);
 
         try {
-            const response = await AuthApiClient.get(`/flashcard-sets/${flashCardSet.flash_card_set_id}/`);
+            const response = await AuthApiClient.get(`/flashcard-sets/${flashCardSet.flash_card_set_id}/`, {
+                params: { lang: language },
+            });
             setFlashCards(response.data.flash_cards ?? []);
         } catch (error) {
             setError("Unable to load flash cards.");
@@ -100,21 +106,29 @@ export default function LearningPage() {
     const handleNewFlashCardSet = () => {
         if(!currentUser) {
             toaster.create({
-                title: "Login required",
-                description: "Please log in before creating a new flashcard set.",
+                title: t("Login required"),
+                description: t("Please log in before creating a new flashcard set."),
                 type: "warning",
             });
             navigate("/login");
             return;
         }
         setIsNewSetFormOpen(true);
+        setFormError(null);
         setError(null);
+    };
+
+    const closeNewSetForm = () => {
+        if (isSubmitting) return;
+        setIsNewSetFormOpen(false);
+        setNewSet({ name: "", description: "" });
+        setFormError(null);
     };
 
     const handleSubmitNewFlashCardSet = async (event) => {
         event.preventDefault();
-        setError(null);
-        setIsLoading(true);
+        setFormError(null);
+        setIsSubmitting(true);
 
         try {
             const response = await AuthApiClient.post("/flashcard-sets/", {
@@ -125,17 +139,18 @@ export default function LearningPage() {
             setNewSet({ name: "", description: "" });
             setIsNewSetFormOpen(false);
         } catch (error) {
-            setError("Unable to create flashcard set.");
+            setFormError("Unable to create flashcard set.");
             console.error("Error creating flash card set:", error);
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     const handleEditFlashCardSet = async (e,updatedSet) => {
         e.preventDefault();
-        setError(null);
-        const formData = new FormData(e.target);
+        setFormError(null);
+        setIsSubmitting(true);
+        const formData = new FormData(e.currentTarget);
         try{
             const response = await AuthApiClient.patch(`/flashcard-sets/${updatedSet.flash_card_set_id}/`, {
                 name: formData.get("name").trim(),
@@ -147,11 +162,22 @@ export default function LearningPage() {
             setFlashCardSets((sets) => sets.map((set) => set.flash_card_set_id === updatedSet.flash_card_set_id ? response.data : set));
             setIsEditingSet(false);
         } catch (error) {
-            setError("Unable to update flashcard set.");
+            setFormError("Unable to update flashcard set.");
             console.error("Error updating flash card set:", error);
         } finally{
-            setIsEditingSet(false);
+            setIsSubmitting(false);
         }
+    };
+
+    const handleEditFlashCardSetOpen = () => {
+        setFormError(null);
+        setIsEditingSet(true);
+    };
+
+    const closeEditSetForm = () => {
+        if (isSubmitting) return;
+        setIsEditingSet(false);
+        setFormError(null);
     };
 
     const handleNewFlashCard = () => {
@@ -159,23 +185,34 @@ export default function LearningPage() {
         setNewCardQuery("");
         setSelectedSuggestion(null);
         setIsSuggestionsOpen(false);
+        setFormError(null);
         setError(null);
     }
+
+    const closeNewCardForm = () => {
+        if (isSubmitting) return;
+        setIsNewCardFormOpen(false);
+        setNewCardQuery("");
+        setSelectedSuggestion(null);
+        setIsSuggestionsOpen(false);
+        setFormError(null);
+    };
 
     const handleSubmitNewFlashCard = async (event) => {
         event.preventDefault();
         if (!selectedSet || !selectedSuggestion) {
-            setError("Choose a dictionary entry first.");
+            setFormError("Choose a dictionary entry first.");
             return;
         }
 
-        setError(null);
+        setFormError(null);
+        setIsSubmitting(true);
 
         try {
             const response = await AuthApiClient.post(`/flashcard-sets/${selectedSet.flash_card_set_id}/flashcards/`, {
                 type: selectedSuggestion.type,
                 entry_id: selectedSuggestion.id,
-            });
+            }, { params: { lang: language } });
             setFlashCards((cards) => [
                 ...cards,
                 response.data,
@@ -185,8 +222,10 @@ export default function LearningPage() {
             setIsNewCardFormOpen(false);
             setIsSuggestionsOpen(false);
         } catch (error) {
-            setError("Unable to create flashcard.");
+            setFormError("Unable to create flashcard.");
             console.error("Error creating flash card:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -225,60 +264,35 @@ export default function LearningPage() {
         >
             {isLearningSessionActive ? (
                 <VStack align="center" gap={4}>
-                    <Heading size="lg" color="bushido.ink">Learning Session</Heading>
-                    <Button {...secondaryButtonStyles} onClick={() => setIsLearningSessionActive(false)}>End Session</Button>
-                    {isLoading && <Text color="bushido.muted">Loading flash cards...</Text>}
-                    {error && <Text color="bushido.error">{error}</Text>}
+                    <Heading size="lg" color="bushido.ink">{t("Learning Session")}</Heading>
+                    <Button {...secondaryButtonStyles} onClick={() => setIsLearningSessionActive(false)}>{t("End Session")}</Button>
+                    {isLoading && <Text color="bushido.muted">{t("Loading flash cards...")}</Text>}
+                    {error && <Text color="bushido.error">{t(error)}</Text>}
                     <FlashCardCarousel flashCards={flashCards} onStatusUpdated={handleFlashCardUpdated} onEndSession={() => setIsLearningSessionActive(false)} />
                 </VStack>
             ) : (
             selectedSet ? (
                 <VStack align="stretch" gap={4}>
-                    {isEditingSet ? (
-                        <VStack 
-                            as="form" 
-                            onSubmit={(e) => handleEditFlashCardSet(e, selectedSet)} 
-                            align="stretch" 
-                            gap={3}
-                            width="100%"
-                            maxWidth="300px"
-                        >
-                            <Input
-                                name="name"
-                                placeholder="Set name"
-                                defaultValue={selectedSet.name}
-                            />
-                            <Input
-                                name="description"
-                                placeholder="Set description"
-                                defaultValue={selectedSet.description}
-                            />
-                            <HStack>
-                                <Button {...primaryButtonStyles} type="submit">Save Changes</Button>
-                                <Button {...secondaryButtonStyles} type="button" onClick={() => setIsEditingSet(false)}>
-                                    Cancel
-                                </Button>
-                            </HStack>
-                        </VStack>
-                    ) : (
-                        <HStack position="relative" width="100%" flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "stretch", md: "center" }}>
+                    <HStack position="relative" width="100%" flexDirection={{ base: "column", md: "row" }} alignItems={{ base: "stretch", md: "center" }}>
                         <VStack align="stretch" alignSelf={{ base: "stretch", md: "flex-end" }} maxWidth={{ base: "100%", md: "fit-content" }} margin={{ base: 0, md: "20px" }} backgroundColor="bushido.surfaceLow" padding={4} borderWidth="1px" borderRadius="4px">
                             <HStack justifyContent="left" alignItems="center">
                                 <Heading size="lg">{selectedSet.name}</Heading>
-                                <FaEdit onClick={() => setIsEditingSet(true)} size={20} color="gray.400" />
+                                <IconButton size="sm" variant="ghost" aria-label={t("Edit Flashcard Set")} onClick={handleEditFlashCardSetOpen}>
+                                    <FaEdit />
+                                </IconButton>
                             </HStack>
                             {selectedSet.description && <Text>{selectedSet.description}</Text>}
-                            {isLoading && <Text>Loading flash cards...</Text>}
-                            {error && <Text color="bushido.error">{error}</Text>}
+                            {isLoading && <Text>{t("Loading flash cards...")}</Text>}
+                            {error && <Text color="bushido.error">{t(error)}</Text>}
                             {!isLoading && !error && flashCards.length === 0 && (
-                                <Text>This set has no flash cards.</Text>
+                                <Text>{t("This set has no flash cards.")}</Text>
                             )}
                             {!isLoading && !error && (
                                 <HStack gap={{ base: 4, sm: 6 }} flexWrap="wrap" pt={2} borderTopWidth="1px" borderColor="bushido.outlineVariant">
                                     {[
-                                        ["Total", flashCards.length, "bushido.ink"],
-                                        ["Remembered", flashCards.filter((card) => card.status === "remembered").length, "bushido.primary"],
-                                        ["Forgotten", flashCards.filter((card) => card.status === "forgotten").length, "bushido.tertiary"],
+                                        [t("Total"), flashCards.length, "bushido.ink"],
+                                        [t("Remembered"), flashCards.filter((card) => card.status === "remembered").length, "bushido.primary"],
+                                        [t("Forgotten"), flashCards.filter((card) => card.status === "forgotten").length, "bushido.tertiary"],
                                     ].map(([label, value, color]) => (
                                         <VStack key={label} align="flex-start" gap={0}>
                                             <Text fontFamily="mono" fontSize="12px" color="bushido.muted">{label}</Text>
@@ -289,101 +303,37 @@ export default function LearningPage() {
                             )}
                         </VStack>
                         <Button {...primaryButtonStyles} type="button" position={{ base: "static", md: "absolute" }} left={{ md: "50%" }} transform={{ md: "translateX(-50%)" }} width={{ base: "100%", md: "auto" }} onClick={handleStartLearning}>
-                            Practice !
+                            {t("Practice!")}
                         </Button>
-                        </HStack>
-                    )}
-                    {isNewCardFormOpen ? (
-                        <VStack as="form" onSubmit={handleSubmitNewFlashCard} align="stretch" gap={3} position="relative">
-                            <Input
-                                name="content"
-                                placeholder="Type your kanji/vocab/grammar term here..."
-                                value={newCardQuery}
-                                onChange={handleNewFlashCardChange}
-                                backgroundColor="white"
-                                color="gray.900"
-                                width={{ base: "100%", md: "320px" }}
-                                required
-                            />
-                            {isSuggestionsOpen && suggestions.length > 0 && (
-                                <VStack
-                                    align="stretch"
-                                    gap={0}
-                                    position="absolute"
-                                    top="42px"
-                                    left={0}
-                                    right={0}
-                                    overflowY="auto"
-                                    maxHeight="200px"
-                                    backgroundColor="white"
-                                    width={{ base: "100%", md: "320px" }}
-                                    borderWidth="1px"
-                                    borderColor="bushido.outline"
-                                    zIndex={1000}
-                                >
-                                    {suggestions.map((suggestion) => (
-                                        <Box
-                                            key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
-                                            onClick={() => {
-                                                setSelectedSuggestion(suggestion);
-                                                setNewCardQuery(suggestion.text);
-                                                setIsSuggestionsOpen(false);
-                                            }}
-                                            padding="8px"
-                                            cursor="pointer"
-                                            _hover={{ backgroundColor: 'bushido.surfaceLow' }}
-                                        >
-                                            <Text color="black">{suggestion.text}</Text>
-                                            <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
-                                        </Box>
-                                    ))}
-                                </VStack>
-                            )}
-                            {selectedSuggestion && (
-                                <Text color="bushido.ink">
-                                    Selected {selectedSuggestion.type}: {selectedSuggestion.text}
-                                </Text>
-                            )}
-                            
-                            <HStack flexWrap="wrap">
-                                <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating" disabled={!selectedSuggestion}>
-                                    Create FlashCard
-                                </Button>
-                                <Button {...secondaryButtonStyles} type="button" onClick={() => setIsNewCardFormOpen(false)}>
-                                    Cancel
-                                </Button>
-                            </HStack>
-                        </VStack>
-                        ) :(
-                            <HStack justifyContent="space-between" alignItems={{ base: "stretch", lg: "center" }} flexDirection={{ base: "column", lg: "row" }}>
+                    </HStack>
+                    <HStack justifyContent="space-between" alignItems={{ base: "stretch", lg: "center" }} flexDirection={{ base: "column", lg: "row" }}>
                                 <Button {...secondaryButtonStyles} width={{ base: "100%", sm: "auto" }} alignSelf={{ base: "stretch", sm: "flex-start" }} onClick={handleBackToSets}>
-                                    Back to flashcard sets
+                                    {t("Back to flashcard sets")}
                                 </Button>
                             <HStack justify="center" gap={{ base: 2, sm: 4 }} flexWrap="wrap">
                                 <Button
                                     {...(currentCardMode === "remembered" ? primaryButtonStyles : secondaryButtonStyles)}
                                     onClick={() => setCurrentCardMode("remembered")}
                                 >
-                                    Remembered
+                                    {t("Remembered")}
                                 </Button>
                                 <Button
                                     {...(currentCardMode === "all" ? primaryButtonStyles : secondaryButtonStyles)}
                                     onClick={() => setCurrentCardMode("all")}
                                 >
-                                    All
+                                    {t("All")}
                                 </Button>
                                 <Button
                                     {...(currentCardMode === "forgotten" ? primaryButtonStyles : secondaryButtonStyles)}
                                     onClick={() => setCurrentCardMode("forgotten")}
                                 >
-                                    Forgotten
+                                    {t("Forgotten")}
                                 </Button>
                             </HStack>
                                 <Button {...primaryButtonStyles} width={{ base: "100%", sm: "auto" }} alignSelf={{ base: "stretch", sm: "flex-end" }} onClick={handleNewFlashCard}>
-                                    New FlashCard
+                                    {t("New Flashcard")}
                                 </Button>
-                            </HStack>
-                        )}
+                    </HStack>
                     {
                     <VStack align="center" gap={4}>
                     {!isLoading && !error && flashCards.filter((flashCard) => {
@@ -411,42 +361,11 @@ export default function LearningPage() {
                 <VStack align="stretch" gap={4}>
                 <HStack justifyContent="space-between" alignItems={{ base: "stretch", sm: "center" }} flexDirection={{ base: "column", sm: "row" }}>
                     <Text as="h1" fontSize="2xl" fontWeight="bold">
-                        My Flashcard sets 
+                        {t("My Flashcard sets")}
                     </Text>
-                    <Button {...primaryButtonStyles} width={{ base: "100%", sm: "auto" }} onClick={handleNewFlashCardSet}>New Flashcard Set</Button>
+                    <Button {...primaryButtonStyles} width={{ base: "100%", sm: "auto" }} onClick={handleNewFlashCardSet}>{t("New Flashcard Set")}</Button>
                 </HStack>
-                {isNewSetFormOpen && (
-                    <VStack as="form" onSubmit={handleSubmitNewFlashCardSet} align="stretch" gap={3}>
-                        <Input
-                            name="name"
-                            placeholder="Name"
-                            value={newSet.name}
-                            onChange={(event) => setNewSet((set) => ({ ...set, name: event.target.value }))}
-                            backgroundColor="white"
-                            color="gray.900"
-                            width={{ base: "100%", md: "320px" }}
-                            required
-                        />
-                        <Textarea
-                            name="description"
-                            placeholder="Description"
-                            value={newSet.description}
-                            onChange={(event) => setNewSet((set) => ({ ...set, description: event.target.value }))}
-                            backgroundColor="white"
-                            width={{ base: "100%", md: "320px" }}
-                            color="gray.900"
-                        />
-                        <HStack flexWrap="wrap">
-                            <Button {...primaryButtonStyles} type="submit" loading={isLoading} loadingText="Creating">
-                                Submit
-                            </Button>
-                            <Button {...secondaryButtonStyles} type="button" onClick={() => setIsNewSetFormOpen(false)}>
-                                Cancel
-                            </Button>
-                        </HStack>
-                    </VStack>
-                )}
-                {error && <Text color="bushido.error">{error}</Text>}
+                {error && <Text color="bushido.error">{t(error)}</Text>}
                 <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={4} gridAutoRows="1fr">
                 {flashCardSets.map((flashCardSet) => (
                     <FlashCardSet
@@ -458,6 +377,150 @@ export default function LearningPage() {
                 </SimpleGrid>
                 </VStack>
             )
+            )}
+
+            <Dialog.Root
+                open={isNewSetFormOpen}
+                onOpenChange={({ open }) => !open && closeNewSetForm()}
+                closeOnEscape={!isSubmitting}
+                closeOnInteractOutside={!isSubmitting}
+                lazyMount
+                unmountOnExit
+            >
+                <Portal>
+                    <Dialog.Backdrop backdropFilter="blur(8px)" />
+                    <Dialog.Positioner>
+                        <Dialog.Content as="form" onSubmit={handleSubmitNewFlashCardSet} maxW="520px" bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
+                            <Dialog.Header><Dialog.Title>{t("New Flashcard Set")}</Dialog.Title></Dialog.Header>
+                            <Dialog.Body>
+                                <VStack align="stretch" gap={3}>
+                                    <Input
+                                        aria-label={t("Name")}
+                                        name="name"
+                                        placeholder={t("Name")}
+                                        value={newSet.name}
+                                        onChange={(event) => setNewSet((set) => ({ ...set, name: event.target.value }))}
+                                        backgroundColor="white"
+                                        color="gray.900"
+                                        autoFocus
+                                        required
+                                    />
+                                    <Textarea
+                                        aria-label={t("Description")}
+                                        name="description"
+                                        placeholder={t("Description")}
+                                        value={newSet.description}
+                                        onChange={(event) => setNewSet((set) => ({ ...set, description: event.target.value }))}
+                                        backgroundColor="white"
+                                        color="gray.900"
+                                    />
+                                    {formError && <Text color="bushido.error">{t(formError)}</Text>}
+                                </VStack>
+                            </Dialog.Body>
+                            <Dialog.Footer>
+                                <Button {...secondaryButtonStyles} type="button" disabled={isSubmitting} onClick={closeNewSetForm}>{t("Cancel")}</Button>
+                                <Button {...primaryButtonStyles} type="submit" loading={isSubmitting} loadingText={t("Creating")}>{t("Submit")}</Button>
+                            </Dialog.Footer>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
+
+            {selectedSet && (
+                <Dialog.Root
+                    open={isEditingSet}
+                    onOpenChange={({ open }) => !open && closeEditSetForm()}
+                    closeOnEscape={!isSubmitting}
+                    closeOnInteractOutside={!isSubmitting}
+                    lazyMount
+                    unmountOnExit
+                >
+                    <Portal>
+                        <Dialog.Backdrop backdropFilter="blur(8px)" />
+                        <Dialog.Positioner>
+                            <Dialog.Content as="form" onSubmit={(event) => handleEditFlashCardSet(event, selectedSet)} maxW="520px" bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
+                                <Dialog.Header><Dialog.Title>{t("Edit Flashcard Set")}</Dialog.Title></Dialog.Header>
+                                <Dialog.Body>
+                                    <VStack align="stretch" gap={3}>
+                                        <Input aria-label={t("Set name")} name="name" placeholder={t("Set name")} defaultValue={selectedSet.name} backgroundColor="white" autoFocus required />
+                                        <Input aria-label={t("Set description")} name="description" placeholder={t("Set description")} defaultValue={selectedSet.description} backgroundColor="white" />
+                                        {formError && <Text color="bushido.error">{t(formError)}</Text>}
+                                    </VStack>
+                                </Dialog.Body>
+                                <Dialog.Footer>
+                                    <Button {...secondaryButtonStyles} type="button" disabled={isSubmitting} onClick={closeEditSetForm}>{t("Cancel")}</Button>
+                                    <Button {...primaryButtonStyles} type="submit" loading={isSubmitting} loadingText={t("Saving")}>{t("Save Changes")}</Button>
+                                </Dialog.Footer>
+                            </Dialog.Content>
+                        </Dialog.Positioner>
+                    </Portal>
+                </Dialog.Root>
+            )}
+
+            {selectedSet && (
+                <Dialog.Root
+                    open={isNewCardFormOpen}
+                    onOpenChange={({ open }) => !open && closeNewCardForm()}
+                    closeOnEscape={!isSubmitting}
+                    closeOnInteractOutside={!isSubmitting}
+                    lazyMount
+                    unmountOnExit
+                >
+                    <Portal>
+                        <Dialog.Backdrop backdropFilter="blur(8px)" />
+                        <Dialog.Positioner>
+                            <Dialog.Content as="form" onSubmit={handleSubmitNewFlashCard} maxW="520px" bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
+                                <Dialog.Header><Dialog.Title>{t("New Flashcard")}</Dialog.Title></Dialog.Header>
+                                <Dialog.Body>
+                                    <VStack align="stretch" gap={3}>
+                                        <Box position="relative">
+                                            <Input
+                                                aria-label={t("Type your kanji/vocab/grammar term here...")}
+                                                name="content"
+                                                placeholder={t("Type your kanji/vocab/grammar term here...")}
+                                                value={newCardQuery}
+                                                onChange={handleNewFlashCardChange}
+                                                backgroundColor="white"
+                                                color="gray.900"
+                                                autoFocus
+                                                required
+                                            />
+                                            {isSuggestionsOpen && suggestions.length > 0 && (
+                                                <VStack align="stretch" gap={0} position="absolute" top="calc(100% + 4px)" left={0} right={0} overflowY="auto" maxHeight="200px" backgroundColor="white" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px" zIndex={1000}>
+                                                    {suggestions.map((suggestion) => (
+                                                        <Box
+                                                            as="button"
+                                                            type="button"
+                                                            key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
+                                                            onClick={() => {
+                                                                setSelectedSuggestion(suggestion);
+                                                                setNewCardQuery(Array.isArray(suggestion.text) ? suggestion.text[0] ?? "" : suggestion.text);
+                                                                setIsSuggestionsOpen(false);
+                                                            }}
+                                                            padding="8px"
+                                                            textAlign="left"
+                                                            cursor="pointer"
+                                                            _hover={{ backgroundColor: "bushido.surfaceLow" }}
+                                                        >
+                                                            <Text color="black">{Array.isArray(suggestion.text) ? suggestion.text.join(", ") : suggestion.text}</Text>
+                                                            <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
+                                                        </Box>
+                                                    ))}
+                                                </VStack>
+                                            )}
+                                        </Box>
+                                        {selectedSuggestion && <Text color="bushido.ink">{t("Selected")} {t(selectedSuggestion.type)}: {selectedSuggestion.text}</Text>}
+                                        {formError && <Text color="bushido.error">{t(formError)}</Text>}
+                                    </VStack>
+                                </Dialog.Body>
+                                <Dialog.Footer>
+                                    <Button {...secondaryButtonStyles} type="button" disabled={isSubmitting} onClick={closeNewCardForm}>{t("Cancel")}</Button>
+                                    <Button {...primaryButtonStyles} type="submit" loading={isSubmitting} loadingText={t("Creating")} disabled={!selectedSuggestion}>{t("Create Flashcard")}</Button>
+                                </Dialog.Footer>
+                            </Dialog.Content>
+                        </Dialog.Positioner>
+                    </Portal>
+                </Dialog.Root>
             )}
         </FullScreenVSection>
     );

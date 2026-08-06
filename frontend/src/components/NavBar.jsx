@@ -1,4 +1,4 @@
-import { Box, Button, HStack, IconButton, Text, VStack } from "@chakra-ui/react"
+import { Box, Button, HStack, IconButton, Text, VStack, Switch } from "@chakra-ui/react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { FaScroll, FaSearch } from "react-icons/fa"
@@ -6,6 +6,7 @@ import { LuLogIn, LuLogOut, LuPanelLeftClose, LuPanelLeftOpen } from "react-icon
 import SearchBar from "./SearchBar"
 import { AUTH_CHANGED_EVENT, clearAuthSession, getStoredUser } from "../utils/AuthStorage"
 import {logoutUser} from "../api/services/AuthServices"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 const mainItems = [
   { name: "Explore", to: "/explore", icon: FaSearch },
@@ -13,6 +14,7 @@ const mainItems = [
 ]
 
 export default function NavBar({ isCollapsed, onToggle }) {
+  const { language, setLanguage, t } = useLanguage()
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const location = useLocation()
   const navigate = useNavigate()
@@ -48,7 +50,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
             {mainItems.map((item) => {
               const active = item.to === "/explore" ? isExplore : location.pathname.startsWith(item.to)
               const Icon = item.icon
-              return <IconButton key={item.name} asChild variant="ghost" color={active ? "bushido.primary" : "bushido.muted"} aria-label={item.name}><Link to={item.to}><Icon /></Link></IconButton>
+              return <IconButton key={item.name} asChild variant="ghost" color={active ? "bushido.primary" : "bushido.muted"} aria-label={t(item.name)}><Link to={item.to}><Icon /></Link></IconButton>
             })}
           </HStack>
         </HStack>
@@ -58,37 +60,41 @@ export default function NavBar({ isCollapsed, onToggle }) {
             <Link to="/explore" aria-label="JLPT Fighter">
               {!isCollapsed && <Text fontSize="24px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text>}
             </Link>
-            {!isCollapsed && <IconButton size="sm" variant="ghost" aria-label="Collapse navigation" onClick={onToggle}><LuPanelLeftClose /></IconButton>}
+            {!isCollapsed && <IconButton size="sm" variant="ghost" aria-label={t("Collapse navigation")} onClick={onToggle}><LuPanelLeftClose /></IconButton>}
           </HStack>
 
-          {isCollapsed && <IconButton alignSelf="center" size="sm" variant="ghost" aria-label="Expand navigation" onClick={onToggle}><LuPanelLeftOpen /></IconButton>}
+          {isCollapsed && <IconButton alignSelf="center" size="sm" variant="ghost" aria-label={t("Expand navigation")} onClick={onToggle}><LuPanelLeftOpen /></IconButton>}
 
           <VStack align="stretch" gap={1} flex="1">
             {mainItems.map((item) => {
               const active = item.to === "/explore" ? isExplore : location.pathname.startsWith(item.to)
               const Icon = item.icon
               return (
-                <Link key={item.name} to={item.to} aria-label={item.name} title={isCollapsed ? item.name : undefined}>
+                <Link key={item.name} to={item.to} aria-label={t(item.name)} title={isCollapsed ? t(item.name) : undefined}>
                   <HStack justify={isCollapsed ? "center" : "flex-start"} p="11px 14px" borderRadius="4px" fontWeight="500" color={active ? "bushido.primary" : "bushido.muted"} bg={active ? "bushido.secondarySoft" : "transparent"} _hover={{ bg: "bushido.surfaceLow", color: "bushido.primary" }}>
                     <Icon />
-                    {!isCollapsed && <Text>{item.name}</Text>}
+                    {!isCollapsed && <Text>{t(item.name)}</Text>}
                   </HStack>
                 </Link>
               )
             })}
           </VStack>
-
+          <Switch.Root flexWrap="wrap" alignSelf="center" justifySelf="end" checked={language === "vi"}  onCheckedChange={({ checked }) => setLanguage(checked ? "vi" : "eng")} colorPalette="green">
+            <Switch.HiddenInput />
+            <Switch.Control><Switch.Thumb /></Switch.Control>
+            {!isCollapsed && <Switch.Label >{language === "vi" ? "VI" : "ENG"}</Switch.Label>}
+          </Switch.Root>
           {currentUser ? (
             <VStack gap={2} pt={5} borderTopWidth="1px">
               <Link to="/me" title={isCollapsed ? currentUser.name || currentUser.email : undefined}>
                 <HStack justify="center"><Box boxSize="32px" borderRadius="full" bg="bushido.primary" color="white" display="grid" placeItems="center" fontWeight="700">{initial}</Box>{!isCollapsed && <Text maxW="110px" truncate>{currentUser.name || currentUser.email}</Text>}</HStack>
               </Link>
-              {isCollapsed ? <IconButton size="sm" variant="ghost" color="bushido.primary" aria-label="Logout" onClick={handleLogout}><LuLogOut /></IconButton> : <Button size="xs" variant="ghost" color="bushido.primary" onClick={handleLogout}>Logout</Button>}
+              {isCollapsed ? <IconButton size="sm" variant="ghost" color="bushido.primary" aria-label={t("Logout")} onClick={handleLogout}><LuLogOut /></IconButton> : <Button size="xs" variant="ghost" color="bushido.primary" onClick={handleLogout}>{t("Logout")}</Button>}
             </VStack>
           ) : isCollapsed ? (
-            <IconButton asChild alignSelf="center" variant="ghost" color="bushido.primary" aria-label="Log in"><Link to="/login"><LuLogIn /></Link></IconButton>
+            <IconButton asChild alignSelf="center" variant="ghost" color="bushido.primary" aria-label={t("Log in")}><Link to="/login"><LuLogIn /></Link></IconButton>
           ) : (
-            <HStack pt={5} borderTopWidth="1px"><Button asChild size="sm" variant="ghost"><Link to="/login">Log in</Link></Button><Button asChild size="sm" bg="bushido.primary" color="white"><Link to="/register">Register</Link></Button></HStack>
+            <HStack pt={5} borderTopWidth="1px"><Button asChild size="sm" variant="ghost"><Link to="/login">{t("Log in")}</Link></Button><Button asChild size="sm" bg="bushido.primary" color="white"><Link to="/register">{t("Register")}</Link></Button></HStack>
           )}
         </VStack>
       </Box>

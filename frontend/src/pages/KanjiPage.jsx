@@ -5,8 +5,10 @@ import Kanji from "../features/Kanji.jsx"
 import { useParams } from "react-router-dom"
 import { normalizeSearchText } from "../utils/UtilFunctions.js"
 import  useSearch  from "../hooks/UseSearch"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function KanjiPage() {
+  const { t } = useLanguage()
   const { searchQuery = "" } = useParams()
   const normalizedQuery = normalizeSearchText(searchQuery)
   const [page, setPage] = useState(1);
@@ -33,20 +35,20 @@ export default function KanjiPage() {
       {/* Display loading, error, or results based on the state */}
       {isLoading ? (
         <Heading as="h1" size="2xl" textAlign="right" position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)">
-          Loading...
+          {t("Loading...")}
         </Heading>
       ) : !normalizedQuery ? (
         <Heading as="h1" size="2xl" textAlign="right" position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)">
-          Kanji Page
+          {t("Kanji Page")}
         </Heading>
       ) : error ? (
         <Heading as="h1" size="2xl" textAlign="center">
-          Error occurred while searching for kanji.
+          {t("Error occurred while searching for kanji.")}
         </Heading>
       ) : results.length === 0 ? 
       (
         <Heading as="h1" size="2xl" textAlign="center">
-          No kanji found for “{searchQuery}”.
+          {t("No kanji found for")} “{searchQuery}”.
         </Heading>
       ) : (
         results.map((entry) => (
@@ -79,7 +81,7 @@ export default function KanjiPage() {
                 setPage(response.previous);
             }}
           >
-            Previous
+            {t("Previous")}
           </button>
           <Text style={{ margin: '0 10px', alignSelf: 'center' }}>{page}/{response ? response.total_pages : 1}</Text>
           <button 
@@ -88,7 +90,7 @@ export default function KanjiPage() {
                 setPage(response.next);
             }}
           >
-            Next
+            {t("Next")}
           </button> 
         </HStack>
       }

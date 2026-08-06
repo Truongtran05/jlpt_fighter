@@ -2,10 +2,12 @@ import { Box, Button, HStack, Input, Text, VStack } from "@chakra-ui/react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import useSuggestions from "../hooks/UseSuggestions.jsx"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 const modes = ["vocab", "grammar", "kanji"]
 
 export default function SearchBar() {
+  const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false)
   const location = useLocation()
@@ -28,10 +30,10 @@ export default function SearchBar() {
   return (
     <HStack gap={2} align="center" position="relative" width="100%" maxW="900px" mx="auto">
       <HStack gap={1}>
-        {modes.map((item) => <Button key={item} size="sm" variant="ghost" bg={mode === item ? "bushido.secondarySoft" : "transparent"} color={mode === item ? "bushido.primary" : "bushido.muted"} onClick={() => navigate(`/${item}`)} textTransform="capitalize">{item}</Button>)}
+        {modes.map((item) => <Button key={item} size="sm" variant="ghost" bg={mode === item ? "bushido.secondarySoft" : "transparent"} color={mode === item ? "bushido.primary" : "bushido.muted"} onClick={() => navigate(`/${item}`)} textTransform="capitalize">{t(item)}</Button>)}
       </HStack>
-      <Input type="search" aria-label={`Search ${mode}`} placeholder={`Search ${mode}...`} value={searchQuery} onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleSearch()} color="bushido.ink" backgroundColor="white" borderColor="bushido.outline" borderRadius="4px" _focusVisible={{ borderColor: "bushido.primary", outlineColor: "bushido.primarySoft" }} />
-      <Button type="button" bg="bushido.primary" color="white" borderRadius="8px" borderWidth="1px" borderColor="bushido.primary" _hover={{ bg: "bushido.primaryHover", borderWidth: "2px" }} onClick={() => handleSearch()}>Search</Button>
+      <Input type="search" aria-label={`${t("Search")} ${t(mode)}`} placeholder={`${t("Search")} ${t(mode)}...`} value={searchQuery} onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleSearch()} color="bushido.ink" backgroundColor="white" borderColor="bushido.outline" borderRadius="4px" _focusVisible={{ borderColor: "bushido.primary", outlineColor: "bushido.primarySoft" }} />
+      <Button type="button" bg="bushido.primary" color="white" borderRadius="8px" borderWidth="1px" borderColor="bushido.primary" _hover={{ bg: "bushido.primaryHover", borderWidth: "2px" }} onClick={() => handleSearch()}>{t("Search")}</Button>
 
       {isSuggestionsOpen && suggestions.length > 0 && (
         <VStack align="stretch" gap={0} position="absolute" top="100%" left={{ base: 0, md: "230px" }} right="84px" overflowY="auto" maxHeight="240px" backgroundColor="white" borderWidth="1px" borderRadius="4px" zIndex={1000}>

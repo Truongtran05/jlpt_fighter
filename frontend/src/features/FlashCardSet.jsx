@@ -1,6 +1,8 @@
 import { Box, HStack, Text } from "@chakra-ui/react"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function FlashCardSet({ flashCardSet, onClick }) {
+  const { t } = useLanguage()
   const total = flashCardSet.total_flash_cards ?? 0
   const remembered = flashCardSet.total_remembered_flash_cards ?? 0
   const forgotten = flashCardSet.total_forgotten_flash_cards ?? 0
@@ -11,22 +13,22 @@ export default function FlashCardSet({ flashCardSet, onClick }) {
       <Text fontSize="14px" color="bushido.muted" mt={1}>{flashCardSet.description}</Text>
       {total > 0 ? (
         <Box mt={4} fontFamily="mono" fontSize="12px">
-          <HStack justify="space-between"><Text>All</Text><Text>{total}</Text></HStack>
-          <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label="All flashcards" aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={total}>
+          <HStack justify="space-between"><Text>{t("All")}</Text><Text>{total}</Text></HStack>
+          <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label={t("All flashcards")} aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={total}>
             <Box h="100%" w={`${(total / Math.max(total, 1)) * 100}%`} bg="bushido.ink" />
           </Box>
-          <HStack justify="space-between" mt={2} color="bushido.primary"><Text>Remembered</Text><Text>{remembered}</Text></HStack>
-        <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label="Remembered flashcards" aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={remembered}>
+          <HStack justify="space-between" mt={2} color="bushido.primary"><Text>{t("Remembered")}</Text><Text>{remembered}</Text></HStack>
+        <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label={t("Remembered flashcards")} aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={remembered}>
           <Box h="100%" w={`${(remembered / Math.max(total, 1)) * 100}%`} bg="bushido.primary" />
         </Box>
-        <HStack justify="space-between" mt={2} color="bushido.tertiary"><Text>Forgotten</Text><Text>{forgotten}</Text></HStack>
-        <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label="Forgotten flashcards" aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={forgotten}>
+        <HStack justify="space-between" mt={2} color="bushido.tertiary"><Text>{t("Forgotten")}</Text><Text>{forgotten}</Text></HStack>
+        <Box h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label={t("Forgotten flashcards")} aria-valuemin={0} aria-valuemax={Math.max(total, 1)} aria-valuenow={forgotten}>
           <Box h="100%" w={`${(forgotten / Math.max(total, 1)) * 100}%`} bg="bushido.tertiary" />
         </Box>
       </Box>) : (
-        <Text mt={4} fontSize="12px" color="bushido.muted">No flashcards in this set yet.</Text>
+        <Text mt={4} fontSize="12px" color="bushido.muted">{t("No flashcards in this set yet.")}</Text>
       )}
-      <Text color="bushido.primary" fontFamily="mono" fontSize="12px" fontWeight="500" letterSpacing="0.05em" mt={3}>Open set →</Text>
+      <Text color="bushido.primary" fontFamily="mono" fontSize="12px" fontWeight="500" letterSpacing="0.05em" mt={3}>{t("Open set →")}</Text>
     </Box>
   )
 }

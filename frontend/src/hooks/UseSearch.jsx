@@ -1,8 +1,10 @@
 import { useCallback, useState } from "react";
 import {searchKanji , searchGrammar, searchVocabulary} from "../api/services/DictionaryServices"
 import {errorMapper} from "../api/core/ErrorMapper"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function useSearch(searchContext) {
+  const { language } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
@@ -21,18 +23,21 @@ export default function useSearch(searchContext) {
           q: query,
           page,
           page_size: pageSize,
+          lang: language,
         });
       } else if (type === 'vocab') {
         apiResponse = await searchVocabulary({
           q: query,
           page,
           page_size: pageSize,
+          lang: language,
         });
       } else if (type === 'grammar') {
         apiResponse = await searchGrammar({
           q: query,
           page,
           page_size: pageSize,
+          lang: language,
         });
       }
       setResponse(apiResponse.data);
@@ -43,7 +48,7 @@ export default function useSearch(searchContext) {
     finally {
       setIsLoading(false);
     }
-  }, [type, page, pageSize]);
+  }, [type, page, pageSize, language]);
 
   return [response, isLoading, search, error];
 }

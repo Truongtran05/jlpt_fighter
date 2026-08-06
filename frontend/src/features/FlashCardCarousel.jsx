@@ -6,6 +6,7 @@ import { FaX } from "react-icons/fa6";
 import { FaCheck } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import {updateFlashCardStatus} from "../api/services/LearningServices.js"
+import { useLanguage } from "../contexts/LanguageContext.jsx";
 
 const slideMs = 320;
 const primaryButtonStyles = {
@@ -34,6 +35,7 @@ const ghostButtonStyles = {
 };
 
 export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, onEndSession }) {
+    const { language, t } = useLanguage();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slideDirection, setSlideDirection] = useState(null);
     const [isEntering, setIsEntering] = useState(false);
@@ -49,7 +51,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, on
     }, []);
 
     if (!currentFlashCard) {
-        return <Text color="bushido.muted">This set has no flash cards.</Text>;
+        return <Text color="bushido.muted">{t("This set has no flash cards.")}</Text>;
     }
 
     function move(direction) {
@@ -74,7 +76,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, on
 
     const handleCardStatusChange = async (flashCardId, status) => {
         try {
-            const response = await updateFlashCardStatus(flashCardId, {"status": status});
+            const response = await updateFlashCardStatus(flashCardId, {"status": status}, language);
             onStatusUpdated?.(response.data);
             if (currentIndex === flashCards.length - 1) {
                 setProgressCount(flashCards.length);
@@ -95,7 +97,7 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, on
 
     return (
         <VStack spacing={4} width="100%" align="center">
-            <Box width="100%" maxW="420px" h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label="Remembered flashcards" aria-valuemin={0} aria-valuemax={Math.max(flashCards.length, 1)} aria-valuenow={progressCount}>
+            <Box width="100%" maxW="420px" h="6px" mt={1} overflow="hidden" bg="bushido.surfaceContainerHigh" borderRadius="full" role="progressbar" aria-label={t("Remembered flashcards")} aria-valuemin={0} aria-valuemax={Math.max(flashCards.length, 1)} aria-valuenow={progressCount}>
                 <Box h="100%" w={`${(progressCount / Math.max(flashCards.length, 1)) * 100}%`} bg="bushido.primary" transition="width .2s ease" />
             </Box>
             <HStack gap={0} py={4} width="100%" justify="center" position="relative">
@@ -161,14 +163,14 @@ export default function FlashCardCarousel({ flashCards = [], onStatusUpdated, on
                     <Dialog.Positioner>
                         <Dialog.Content bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
                             <Dialog.Header>
-                                <Dialog.Title>Session complete</Dialog.Title>
+                                <Dialog.Title>{t("Session complete")}</Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body>
-                                <Text color="bushido.muted">You have reviewed every flashcard in this session.</Text>
+                                <Text color="bushido.muted">{t("You have reviewed every flashcard in this session.")}</Text>
                             </Dialog.Body>
                             <Dialog.Footer>
-                                <Button {...secondaryButtonStyles} onClick={onEndSession}>End session</Button>
-                                <Button {...primaryButtonStyles} onClick={restart}>Restart</Button>
+                                <Button {...secondaryButtonStyles} onClick={onEndSession}>{t("End session")}</Button>
+                                <Button {...primaryButtonStyles} onClick={restart}>{t("Restart")}</Button>
                             </Dialog.Footer>
                         </Dialog.Content>
                     </Dialog.Positioner>

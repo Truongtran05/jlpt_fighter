@@ -36,3 +36,5 @@ data/
 # Other
 /scripts
 
+#postman testing
+postman/

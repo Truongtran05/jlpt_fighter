@@ -7,6 +7,11 @@ from dictionary.models import Kanji_entry, Vocab_entry, Grammar_entry
 from .serializers import FlashCardDetailSerializer, FlashCardEntrySerializer, FlashCardSetSerializer
 from django.db import transaction
 
+
+def _get_language(request):
+    return {'en': 'en', 'eng': 'en', 'vi': 'vi', 'vie': 'vi'}.get(request.query_params.get('lang', 'eng').lower(), 'en')
+
+
 # Create your views here.
 class FlashCardSetCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -50,7 +55,11 @@ class FlashCardSetDetailsView(APIView):
             "name" : flash_card_set.name,
             "description" : flash_card_set.description,
             "visibility" : flash_card_set.visibility,
-            "flash_cards" : FlashCardDetailSerializer(flash_cards, many=True).data
+            "flash_cards" : FlashCardDetailSerializer(
+                flash_cards,
+                many=True,
+                context={'lang': _get_language(request)},
+            ).data
         })
 
     #update a specific flashcard set
@@ -123,7 +132,10 @@ class FlashCardCreateView(APIView):
                         grammar_entry_id=entry_id
                     )
             return Response(
-                FlashCardDetailSerializer(serializer.instance).data,
+                FlashCardDetailSerializer(
+                    serializer.instance,
+                    context={'lang': _get_language(request)},
+                ).data,
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -178,7 +190,10 @@ class FlashCardUpdateView(APIView):
                         flash_card_entry=flash_card,
                         **{self.entry_field_by_type[card_type]: entry_id}
                     )
-            return Response(FlashCardDetailSerializer(flash_card).data)
+            return Response(FlashCardDetailSerializer(
+                flash_card,
+                context={'lang': _get_language(request)},
+            ).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     #soft delete a specific flashcard
@@ -214,5 +229,8 @@ class UpdateFlashCardStatusView(APIView):
 
         flash_card.status = status_value
         flash_card.save(update_fields=["status"])
-        return Response(FlashCardDetailSerializer(flash_card).data)
+        return Response(FlashCardDetailSerializer(
+            flash_card,
+            context={'lang': _get_language(request)},
+        ).data)
 

@@ -5,7 +5,9 @@ import { useEffect, useState } from "react"
 import Grammar from "../features/Grammar.jsx"
 import { useParams } from "react-router-dom"
 import { normalizeSearchText } from "../utils/UtilFunctions.js"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 export default function GrammarPage() {
+  const { t } = useLanguage()
 
   const {searchQuery = ""} = useParams()
   const normalizedQuery = normalizeSearchText(searchQuery)
@@ -31,20 +33,20 @@ export default function GrammarPage() {
       {/* Display loading, error, or results based on the state */}
       {isLoading ? (
         <Heading as="h1" size="2xl" textAlign="right" position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)">
-          Loading...
+          {t("Loading...")}
         </Heading>
       ) : !normalizedQuery ? (
         <Heading as="h1" size="2xl" textAlign="right" position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)">
-          Grammar Page
+          {t("Grammar Page")}
         </Heading>
       ) : error ? (
         <Heading as="h1" size="2xl" textAlign="center">
-          Error occurred while searching for grammar.
+          {t("Error occurred while searching for grammar.")}
         </Heading>
       ) : results.length === 0 ? 
       (
         <Heading as="h1" size="2xl" textAlign="center">
-          No grammar found for “{searchQuery}”.
+          {t("No grammar found for")} “{searchQuery}”.
         </Heading>
       ) : (
         results.map((entry) => (
@@ -76,7 +78,7 @@ export default function GrammarPage() {
                 setPage(response.previous);
             }}
           >
-            Previous
+            {t("Previous")}
           </button>
           <Text style={{ margin: '0 10px', alignSelf: 'center' }}>{page}/{response ? response.total_pages : 1}</Text>
           <button 
@@ -85,7 +87,7 @@ export default function GrammarPage() {
                 setPage(response.next);
             }}
           >
-            Next
+            {t("Next")}
           </button> 
         </HStack>
       }

@@ -5,6 +5,7 @@ import { FaEdit} from "react-icons/fa";
 import { BsFillBookmarkCheckFill,  BsBookmarkDashFill } from "react-icons/bs";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
 import { MdDelete } from "react-icons/md";
+import { useLanguage } from "../contexts/LanguageContext.jsx";
 
 
 const typeLabels = {
@@ -27,15 +28,6 @@ const secondaryButtonStyles = {
   _hover: { bg: "bushido.surfaceLow" },
   size: "sm"
 };
-const destructiveButtonStyles = {
-    bg: "bushido.tertiary",
-    color: "white",
-    borderRadius: "8px",
-    borderWidth: "1px",
-    borderColor: "bushido.tertiary",
-    _hover: { bg: "bushido.tertiaryHover", borderWidth: "2px" },
-};
-
 function asList(value) {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
@@ -44,16 +36,16 @@ function asList(value) {
   return value ? [value] : [];
 }
 
-function getCardContent(flashCard) {
+function getCardContent(flashCard, t) {
 
   if (flashCard.type === "kanji") {
     return {
       front: flashCard.kanji ?? "Kanji",
-      backTitle: asList(flashCard.meaning ?? flashCard.meanings).join(", ") || "No meaning",
+      backTitle: asList(flashCard.meaning ?? flashCard.meanings).join(", ") || t("No meaning"),
       lines: [
         ["Onyomi", asList(flashCard.onyomi).join(", ")],
         ["Kunyomi", asList(flashCard.kunyomi).join(", ")],
-        ["Stroke count", flashCard.strokeCount ?? flashCard.stroke_count],
+        [t("Stroke count"), flashCard.strokeCount ?? flashCard.stroke_count],
         ["JLPT", flashCard.jlptLevel ? `N${flashCard.jlptLevel}` : flashCard.jlpt_level ? `N${flashCard.jlpt_level}` : null],
       ],
     };
@@ -62,36 +54,45 @@ function getCardContent(flashCard) {
   if (flashCard.type === "vocab") {
     const kanji = asList(flashCard.kanji ?? flashCard.writings?.kanji);
     const kana = asList(flashCard.kana ?? flashCard.writings?.kana);
+    const senses = asList(flashCard.senses);
 
     return {
-      front: kanji[0] ?? kana[0] ?? "Vocabulary",
-      backTitle: asList(flashCard.meaning ?? flashCard.meanings).join("; ") || "No meaning",
+      front: kanji[0] ?? kana[0] ?? t("Vocabulary"),
+      backTitle: senses.flatMap((sense) => asList(sense.meanings)).join("; ") || t("No meaning"),
       lines: [
         ["Kanji", kanji.join(", ")],
         ["Kana", kana.join(", ")],
+        [t("Part of speech"), senses.map((sense) => sense.part_of_speech).filter(Boolean).join(", ")],
       ],
     };
   }
 
   if (flashCard.type === "grammar") {
+    const examples = asList(flashCard.examples);
     return {
-      front: flashCard.grammar ?? "Grammar",
-      backTitle: flashCard.meaning ?? "No meaning",
+      front: flashCard.grammar ?? t("Grammar"),
+      backTitle: asList(flashCard.meaning).join("; ") || t("No meaning"),
       lines: [
-        ["Formation", flashCard.formation],
+        [t("Formation"), flashCard.formation],
         ["JLPT", flashCard.jlpt_level ? `N${flashCard.jlpt_level}` : null],
+        [t("Examples"), examples.map((example) => [
+          example.example_japanese,
+          example.example_romaji,
+          example.example_gloss,
+        ].filter(Boolean).join(" — ")).join(" | ")],
       ],
     };
   }
 
   return {
-    front: "Flashcard",
-    backTitle: "Unsupported flashcard type",
-    lines: [["Type", flashCard.type]],
+    front: t("Flashcard"),
+    backTitle: t("Unsupported flashcard type"),
+    lines: [[t("Type"), flashCard.type]],
   };
 }
 
-export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}) {
+export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable }) {
+  const { language, t } = useLanguage();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -99,8 +100,8 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}
     return null;
   }
 
-  const cardType = typeLabels[flashCard.type] ?? "Flashcard";
-  const content = getCardContent(flashCard);
+  const cardType = t(typeLabels[flashCard.type] ?? "Flashcard");
+  const content = getCardContent(flashCard, t);
 
   function handleEdit(){
     setIsEditing(true);
@@ -116,7 +117,7 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}
       const response = await AuthApiClient.patch(`/flashcards/${flashCard.flash_card_id}/`, {
         type: selectedSuggestion.type,
         entry_id: selectedSuggestion.id,
-      });
+      }, { params: { lang: language } });
       onUpdated?.(response.data);
       setIsEditing(false);
     } catch (error) {
@@ -139,10 +140,10 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}
       textAlign="left"
       perspective="1000px"
       onClick={() => setIsFlipped((value) => !value)}
-      aria-label={isFlipped ? "Show flashcard front" : "Show flashcard answer"}
+      aria-label={t(isFlipped ? "Show flashcard front" : "Show flashcard answer")}
     >
       {isEditing ? (
-        <CardEditForm onSubmit={onEditSubmit} onCancel={onEditCancel} flashCardId={flashCard.flash_card_id} />
+        <CardEditForm onSubmit={onEditSubmit} onCancel={onEditCancel} />
       ) : (
         <Box
           position="relative"
@@ -158,7 +159,7 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}
                 {cardType}
               </Text>
               <Text fontSize="sm" color="bushido.muted">
-                Click to flip
+                {t("Click to flip")}
               </Text>
               {isEditable && (
                 <Button
@@ -215,10 +216,11 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable}
 }
 
 function CardEditForm({onSubmit, onCancel }) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
-  const  suggestions = useSuggestions(query);
+  const suggestions = useSuggestions(query);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
@@ -246,16 +248,16 @@ function CardEditForm({onSubmit, onCancel }) {
           onSubmit(e, selectedSuggestion);
         }}
       >
-        <Heading size="md">Edit Flashcard</Heading>
+        <Heading size="md">{t("Edit Flashcard")}</Heading>
         <Input 
-          placeholder="Type your kanji/vocab/grammar term here..."
+          placeholder={t("Type your kanji/vocab/grammar term here...")}
           backgroundColor="white"
           color="bushido.ink"
           autoFocus
           value={query}
           onChange={handleChange}
         />
-        {selectedSuggestion && (<Text color="bushido.muted" fontSize="sm">Selected: {selectedSuggestion.text}</Text>)}
+        {selectedSuggestion && (<Text color="bushido.muted" fontSize="sm">{t("Selected")}: {selectedSuggestion.text}</Text>)}
         {isSuggestionsOpen && suggestions.length > 0 && (
             <VStack
                 align="stretch"
@@ -276,14 +278,14 @@ function CardEditForm({onSubmit, onCancel }) {
                         key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
                         onClick={() => {
                             setSelectedSuggestion(suggestion);
-                            setQuery(suggestion.text);
+                            setQuery(asList(suggestion.text)[0] ?? "");
                             setIsSuggestionsOpen(false);
                         }}
                         padding="8px"
                         cursor="pointer"
                         _hover={{ backgroundColor: 'bushido.surfaceLow' }}
                     >
-                        <Text color="black">{suggestion.text}</Text>
+                        <Text color="black">{asList(suggestion.text).join(", ")}</Text>
                         <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
                     </Box>
                 ))}
@@ -291,10 +293,10 @@ function CardEditForm({onSubmit, onCancel }) {
         )}
         <HStack justify="flex-end" gap={2}>
           <Button {...secondaryButtonStyles} type="button" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button {...primaryButtonStyles} type="submit">
-            Save
+            {t("Save")}
           </Button>
         </HStack>
       </VStack>

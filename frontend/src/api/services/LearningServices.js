@@ -33,6 +33,6 @@ export function deleteFlashCard(cardId){
     return AuthApiClient.delete(LearningEndPoints.flashCardDetails(cardId))
 }
 
-export function updateFlashCardStatus(cardId, statusData){
-    return AuthApiClient.patch(LearningEndPoints.flashCardStatusUpdate(cardId), statusData)
+export function updateFlashCardStatus(cardId, statusData, language){
+    return AuthApiClient.patch(LearningEndPoints.flashCardStatusUpdate(cardId), statusData, { params: { lang: language } })
 }

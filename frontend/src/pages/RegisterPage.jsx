@@ -12,8 +12,10 @@ import { useState } from "react"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 import { saveAuthSession } from "../utils/AuthStorage"
 import useAuth from "../hooks/UseAuth"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function RegisterPage() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: "",
@@ -45,7 +47,7 @@ export default function RegisterPage() {
         responseData?.password?.[0] ||
         responseData?.detail ||
         responseData?.error ||
-        "Unable to create an account with those details."
+        t("Unable to create an account with those details.")
       setError(responseMessage)
     }
   }
@@ -72,16 +74,16 @@ export default function RegisterPage() {
         <VStack gap={5} align="stretch">
           <VStack gap={2} align="stretch">
             <Heading as="h1" size="xl">
-              Register
+              {t("Register")}
             </Heading>
             <Text color="bushido.muted">
-              Create your JLPT Fighter account.
+              {t("Create your JLPT Fighter account.")}
             </Text>
           </VStack>
 
           <VStack gap={2} align="stretch">
             <Text as="label" htmlFor="name" fontWeight="semibold">
-              Name
+              {t("Name")}
             </Text>
             <Input
               id="name"
@@ -96,7 +98,7 @@ export default function RegisterPage() {
 
           <VStack gap={2} align="stretch">
             <Text as="label" htmlFor="email" fontWeight="semibold">
-              Email
+              {t("Email")}
             </Text>
             <Input
               id="email"
@@ -111,7 +113,7 @@ export default function RegisterPage() {
 
           <VStack gap={2} align="stretch">
             <Text as="label" htmlFor="password" fontWeight="semibold">
-              Password
+              {t("Password")}
             </Text>
             <Input
               id="password"
@@ -127,7 +129,7 @@ export default function RegisterPage() {
 
           {(error || loginError || registerError) && (
             <Text color="red.600" fontWeight="semibold">
-              {error || loginError || registerError}
+              {t(error || loginError || registerError)}
             </Text>
           )}
 
@@ -136,15 +138,15 @@ export default function RegisterPage() {
             backgroundColor="bushido.primary"
             color="white"
             loading={isRegisterLoading || isLoginLoading}
-            loadingText="Creating account"
+            loadingText={t("Creating account")}
           >
-            Create account
+            {t("Create account")}
           </Button>
 
           <Text color="bushido.muted" textAlign="center">
-            Already have an account?{" "}
+            {t("Already have an account?")}{" "}
             <ChakraLink asChild color="bushido.primary" fontWeight="semibold">
-              <RouterLink to="/login">Log in</RouterLink>
+              <RouterLink to="/login">{t("Log in")}</RouterLink>
             </ChakraLink>
           </Text>
         </VStack>

@@ -12,8 +12,10 @@ import { useState } from "react"
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom"
 import { saveAuthSession } from "../utils/AuthStorage"
 import useAuth from "../hooks/UseAuth"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -58,16 +60,16 @@ export default function LoginPage() {
         <VStack gap={5} align="stretch">
           <VStack gap={2} align="stretch">
             <Heading as="h1" size="xl">
-              Log in
+              {t("Log in")}
             </Heading>
             <Text color="bushido.muted">
-              Continue your JLPT practice.
+              {t("Continue your JLPT practice.")}
             </Text>
           </VStack>
 
           <VStack gap={2} align="stretch">
             <Text as="label" htmlFor="email" fontWeight="semibold">
-              Email
+              {t("Email")}
             </Text>
             <Input
               id="email"
@@ -82,7 +84,7 @@ export default function LoginPage() {
 
           <VStack gap={2} align="stretch">
             <Text as="label" htmlFor="password" fontWeight="semibold">
-              Password
+              {t("Password")}
             </Text>
             <Input
               id="password"
@@ -97,7 +99,7 @@ export default function LoginPage() {
 
           {loginError && (
             <Text color="red.600" fontWeight="semibold">
-              {loginError}
+              {t(loginError)}
             </Text>
           )}
 
@@ -106,15 +108,15 @@ export default function LoginPage() {
             backgroundColor="bushido.primary"
             color="white"
             loading={isLoginLoading}
-            loadingText="Logging in"
+            loadingText={t("Logging in")}
           >
-            Log in
+            {t("Log in")}
           </Button>
 
           <Text color="bushido.muted" textAlign="center">
-            Need an account?{" "}
+            {t("Need an account?")}{" "}
             <ChakraLink asChild color="bushido.primary" fontWeight="semibold">
-              <RouterLink to="/register">Register</RouterLink>
+              <RouterLink to="/register">{t("Register")}</RouterLink>
             </ChakraLink>
           </Text>
         </VStack>

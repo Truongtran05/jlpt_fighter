@@ -1,6 +1,8 @@
 import { Box, Heading, Text, VStack } from "@chakra-ui/react"
+import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 export default function Kanji({ kanji, onyomi = [], kunyomi = [], strokeCount, jlptLevel, meaning = [], ...props }) {
+  const { t } = useLanguage()
   return <Box 
           {...props} 
           bg="white" 
@@ -27,8 +29,8 @@ export default function Kanji({ kanji, onyomi = [], kunyomi = [], strokeCount, j
                 <b>Kunyomi</b> {kunyomi.join(", ")}
               </Text>
             </VStack>
-            <Text mt={4}><b>Stroke count</b> {strokeCount}</Text>
-            {jlptLevel && <Text><b>JLPT level</b> N{jlptLevel}</Text>}
-            <Text><b>Meaning</b> {meaning.join(", ")}</Text>
+            <Text mt={4}><b>{t("Stroke count")}</b> {strokeCount}</Text>
+            {jlptLevel > 0  && <Text><b>{t("JLPT level")}</b> N{jlptLevel}</Text>}
+            <Text><b>{t("Meaning")}</b> {meaning.join(", ")}</Text>
       </Box>
 }

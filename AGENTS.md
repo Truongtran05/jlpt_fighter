@@ -1,10 +1,9 @@
 # AGENTS.md
 
 ## Project Rules & Guidelines
-- Luôn kiểm tra và tuân thủ nghiêm ngặt các quy chuẩn giao diện (màu sắc, typography, khoảng cách) được định nghĩa trong file `DESIGN.md`.
-- Trước khi tạo hoặc sửa đổi bất kỳ thành phần UI nào, hãy đọc và áp dụng các Design Token từ `@DESIGN.md`.
+- Before any UI changes, read DESIGN.md for design tokens, use already defined theme for styling
 
 ## Tech Stack
-- Frontend: [ReactJS]
-- Backend: [Django]
+- Frontend: [ReactJS, Vite, ChakraUI]
+- Backend: [Django, DjangoRESTframwork]
 - Database: [PostgreSQL]
