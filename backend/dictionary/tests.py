@@ -1,8 +1,10 @@
 import json
+from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
 from .models import (
@@ -17,6 +19,74 @@ from .models import (
     Vocab_sense,
     Vocab_writting,
 )
+
+
+class DictionaryStatsViewTests(TestCase):
+    def test_returns_dictionary_entry_counts(self):
+        Kanji_entry.objects.create(kanji="日", stroke_count=4)
+        Vocab_entry.objects.create()
+        Grammar_entry.objects.create(grammar="～うちに")
+
+        self.assertEqual(
+            self.client.get("/api/v1/stats/").json(),
+            {"vocabulary": 1, "kanji": 1, "grammar": 1},
+        )
+
+
+class FetchRelatedViewTests(TestCase):
+    def test_get_related_kanji_preserves_query_order_and_language(self):
+        day = Kanji_entry.objects.create(kanji="日", stroke_count=4)
+        book = Kanji_entry.objects.create(kanji="本", stroke_count=5)
+        Kanji_meaning.objects.create(kanji_entry=day, lang="en", meaning="day")
+        Kanji_meaning.objects.create(kanji_entry=day, lang="vi", meaning="ngày")
+        Kanji_meaning.objects.create(kanji_entry=book, lang="en", meaning="book")
+
+        response = self.client.get(
+            "/api/v1/related/kanji/", {"q": "日本語日", "lang": "eng"}
+        ).json()
+
+        self.assertEqual(response, {"results": [
+            {"kanji_id": day.kanji_id, "kanji": "日", "meaning": ["day"]},
+            {"kanji_id": book.kanji_id, "kanji": "本", "meaning": ["book"]},
+        ]})
+
+    def test_get_related_vocab_returns_matching_writing_and_short_meaning(self):
+        matching = Vocab_entry.objects.create()
+        Vocab_writting.objects.create(
+            vocab_entry=matching, writting_type="kanji", writting="日本語", common=True
+        )
+        Vocab_writting.objects.create(
+            vocab_entry=matching, writting_type="kana", writting="にほんご"
+        )
+        sense = Vocab_sense.objects.create(
+            vocab_entry=matching, lang="en", position=0, applied_to_kanji="日本語"
+        )
+        Vocab_meaning.objects.create(
+            vocab_sense=sense, meaning="Japanese language with a long description"
+        )
+        unrelated = Vocab_entry.objects.create()
+        Vocab_writting.objects.create(
+            vocab_entry=unrelated, writting_type="kanji", writting="英語"
+        )
+
+        response = self.client.get(
+            "/api/v1/related/vocab/", {"q": "日", "lang": "en"}
+        ).json()
+
+        self.assertEqual(response["count"], 1)
+        self.assertEqual(response["results"][0]["vocab_id"], matching.vocab_id)
+        self.assertEqual(response["results"][0]["writting"], "日本語")
+        self.assertEqual(response["results"][0]["meaning"], "Japanese language w…")
+
+    def test_blank_queries_return_no_results(self):
+        self.assertEqual(
+            self.client.get("/api/v1/related/kanji/", {"q": " "}).json(),
+            {"results": []},
+        )
+        self.assertEqual(
+            self.client.get("/api/v1/related/vocab/", {"q": " "}).json(),
+            {"results": []},
+        )
 
 
 class KanjiSearchViewTests(TestCase):
@@ -254,6 +324,105 @@ class ImportKanjiTests(TestCase):
             [("en", "Asia"), ("vi", "[á] châu Á")],
         )
         self.assertEqual(entry.sino_vietnamese.count(), 2)
+
+
+class UpdateKanjiJlptTests(TestCase):
+    def _write_level_files(self, directory, values_by_level):
+        for level in range(1, 6):
+            (Path(directory) / f"N{level}_kanji.txt").write_text(
+                " ".join(values_by_level.get(level, [])), encoding="utf-8"
+            )
+
+    def test_updates_matching_entries_and_reports_missing_kanji(self):
+        first = Kanji_entry.objects.create(kanji="亜", stroke_count=7, jlpt_level=0)
+        fifth = Kanji_entry.objects.create(kanji="日", stroke_count=4, jlpt_level=3)
+
+        with TemporaryDirectory() as directory:
+            self._write_level_files(directory, {1: ["亜", "愛"], 5: ["日"]})
+            stdout = StringIO()
+            call_command("update_kanji_jlpt", data_dir=Path(directory), stdout=stdout)
+
+        first.refresh_from_db()
+        fifth.refresh_from_db()
+        self.assertEqual((first.jlpt_level, fifth.jlpt_level), (1, 5))
+        self.assertIn("Updated 2 kanji", stdout.getvalue())
+        self.assertIn("1 not found", stdout.getvalue())
+
+    def test_dry_run_does_not_update_entries(self):
+        entry = Kanji_entry.objects.create(kanji="日", stroke_count=4, jlpt_level=0)
+
+        with TemporaryDirectory() as directory:
+            self._write_level_files(directory, {5: ["日"]})
+            call_command("update_kanji_jlpt", data_dir=Path(directory), dry_run=True)
+
+        entry.refresh_from_db()
+        self.assertEqual(entry.jlpt_level, 0)
+
+    def test_rejects_kanji_appearing_in_multiple_levels(self):
+        with TemporaryDirectory() as directory:
+            self._write_level_files(directory, {1: ["日"], 5: ["日"]})
+            with self.assertRaisesMessage(CommandError, "occurs in both N1 and N5"):
+                call_command("update_kanji_jlpt", data_dir=Path(directory))
+
+
+class UpdateVocabJlptTests(TestCase):
+    def _write_csv(self, path, rows):
+        lines = ["Original,Furigana,English,JLPT Level"]
+        lines.extend(",".join(row) for row in rows)
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    def test_normalizes_original_and_updates_matching_kanji_writing(self):
+        entry = Vocab_entry.objects.create(jlpt_level=0)
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kanji", writting="ＡＢＣ"
+        )
+
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "jlpt_vocab.csv"
+            self._write_csv(path, [(" ABC ", "えーびーしー", "letters", "N3")])
+            call_command("update_vocab_jlpt", path=path)
+
+        entry.refresh_from_db()
+        self.assertEqual(entry.jlpt_level, 3)
+
+    def test_uses_furigana_to_resolve_original_in_multiple_levels(self):
+        entry = Vocab_entry.objects.create(jlpt_level=0)
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kanji", writting="人気"
+        )
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kana", writting="にんき"
+        )
+
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "jlpt_vocab.csv"
+            self._write_csv(path, [
+                ("人気", "にんき", "popularity", "N3"),
+                ("人気", "ひとけ", "sign of life", "N1"),
+            ])
+            call_command("update_vocab_jlpt", path=path)
+
+        entry.refresh_from_db()
+        self.assertEqual(entry.jlpt_level, 3)
+
+    def test_skips_an_ambiguous_match(self):
+        entry = Vocab_entry.objects.create(jlpt_level=0)
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kanji", writting="人気"
+        )
+
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "jlpt_vocab.csv"
+            self._write_csv(path, [
+                ("人気", "にんき", "popularity", "N3"),
+                ("人気", "ひとけ", "sign of life", "N1"),
+            ])
+            stdout = StringIO()
+            call_command("update_vocab_jlpt", path=path, stdout=stdout)
+
+        entry.refresh_from_db()
+        self.assertEqual(entry.jlpt_level, 0)
+        self.assertIn("1 ambiguous entries skipped", stdout.getvalue())
 
 
 class ImportGrammarTests(TestCase):

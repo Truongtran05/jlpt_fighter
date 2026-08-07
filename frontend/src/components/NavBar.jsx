@@ -3,13 +3,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { FaScroll, FaSearch } from "react-icons/fa"
 import { LuLogIn, LuLogOut, LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu"
-import SearchBar from "./SearchBar"
 import { AUTH_CHANGED_EVENT, clearAuthSession, getStoredUser } from "../utils/AuthStorage"
 import {logoutUser} from "../api/services/AuthServices"
 import { useLanguage } from "../contexts/LanguageContext.jsx"
 
 const mainItems = [
-  { name: "Explore", to: "/explore", icon: FaSearch },
+  { name: "Dictionary", to: "/dictionary", icon: FaSearch },
   { name: "Learning", to: "/learning", icon: FaScroll },
 ]
 
@@ -18,7 +17,6 @@ export default function NavBar({ isCollapsed, onToggle }) {
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const location = useLocation()
   const navigate = useNavigate()
-  const isExplore = ["/explore", "/grammar", "/kanji", "/vocab"].some((path) => location.pathname.startsWith(path))
   const initial = currentUser?.name?.trim()?.[0]?.toUpperCase() || currentUser?.email?.trim()?.[0]?.toUpperCase() || "?"
   useEffect(() => {
     const sync = () => setCurrentUser(getStoredUser())
@@ -37,7 +35,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
       console.error("Logout failed:", error)
     } finally {
       clearAuthSession()
-      navigate("/explore", { replace: true })
+      navigate("/", { replace: true })
     }
   }
 
@@ -45,10 +43,10 @@ export default function NavBar({ isCollapsed, onToggle }) {
     <>
       <Box as="nav" position="fixed" inset={{ base: "0 0 auto", lg: "0 auto 0 0" }} w={{ base: "100%", lg: isCollapsed ? "80px" : "248px" }} h={{ base: "72px", lg: "100vh" }} bg="white" borderRightWidth={{ lg: "1px" }} borderBottomWidth={{ base: "1px", lg: 0 }} p={{ base: 4, lg: isCollapsed ? "24px 12px" : "32px 20px" }} zIndex={1000} transition="width 0.2s ease, padding 0.2s ease">
         <HStack justify="space-between" display={{ base: "flex", lg: "none" }}>
-          <Link to="/explore"><Text fontSize="22px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text></Link>
+          <Link to="/"><Text fontSize="22px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text></Link>
           <HStack gap={1}>
             {mainItems.map((item) => {
-              const active = item.to === "/explore" ? isExplore : location.pathname.startsWith(item.to)
+              const active = location.pathname.startsWith(item.to)
               const Icon = item.icon
               return <IconButton key={item.name} asChild variant="ghost" color={active ? "bushido.primary" : "bushido.muted"} aria-label={t(item.name)}><Link to={item.to}><Icon /></Link></IconButton>
             })}
@@ -57,7 +55,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
 
         <VStack align="stretch" h="100%" display={{ base: "none", lg: "flex" }} gap={8}>
           <HStack justify={isCollapsed ? "center" : "space-between"}>
-            <Link to="/explore" aria-label="JLPT Fighter">
+            <Link to="/" aria-label="JLPT Fighter">
               {!isCollapsed && <Text fontSize="24px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text>}
             </Link>
             {!isCollapsed && <IconButton size="sm" variant="ghost" aria-label={t("Collapse navigation")} onClick={onToggle}><LuPanelLeftClose /></IconButton>}
@@ -67,7 +65,7 @@ export default function NavBar({ isCollapsed, onToggle }) {
 
           <VStack align="stretch" gap={1} flex="1">
             {mainItems.map((item) => {
-              const active = item.to === "/explore" ? isExplore : location.pathname.startsWith(item.to)
+              const active = location.pathname.startsWith(item.to)
               const Icon = item.icon
               return (
                 <Link key={item.name} to={item.to} aria-label={t(item.name)} title={isCollapsed ? t(item.name) : undefined}>
@@ -98,13 +96,6 @@ export default function NavBar({ isCollapsed, onToggle }) {
           )}
         </VStack>
       </Box>
-
-      {isExplore && (
-        <>
-          <Box position="fixed" top={0} left={{ base: 0, lg: isCollapsed ? "80px" : "248px" }} right={0} mt={{ base: "72px", lg: 0 }} px={{ base: 4, md: 6 }} py={3} bg="white" borderBottomWidth="1px" zIndex={900} transition="left 0.2s ease"><SearchBar /></Box>
-          <Box h="72px" aria-hidden="true" />
-        </>
-      )}
     </>
   )
 }

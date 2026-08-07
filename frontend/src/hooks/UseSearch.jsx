@@ -40,7 +40,7 @@ export default function useSearch(searchContext) {
           lang: language,
         });
       }
-      setResponse(apiResponse.data);
+      setResponse({ ...apiResponse.data, searchType: type, searchQuery: query, searchPage: page });
     } 
     catch (err) {
       setError(errorMapper(err));

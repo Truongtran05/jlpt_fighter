@@ -3,11 +3,22 @@ from .models import *
 from utils.string_utility import query_classify, romaji_to_kana
 from django.http import JsonResponse
 from django.core.paginator import Paginator 
+from django.utils.text import Truncator
 from django.db.models import F,Q, Prefetch, Value
 from django.db.models.functions import Replace
+from rest_framework import viewsets
+from rest_framework.response import Response
 
 def _get_language(request):
     return {'en': 'en', 'eng': 'en', 'vi': 'vi', 'vie': 'vi'}.get(request.GET.get('lang', 'eng').lower(), 'en')
+
+class DictionaryStatsView(View):
+    def get(self, request):
+        return JsonResponse({
+            'vocabulary': Vocab_entry.objects.count(),
+            'kanji': Kanji_entry.objects.count(),
+            'grammar': Grammar_entry.objects.count(),
+        })
 
 #class-based view for searching kanji characters
 class KanjiSearchView(View):
@@ -368,3 +379,80 @@ class SuggestionsView(View):
             ).distinct()[:10])
 
         return JsonResponse({'suggestions': list(suggestions)})
+
+class FetchRelatedView(viewsets.ModelViewSet):
+    http_method_names = ["get", "head", "options"]
+
+    def get_related_kanji(self, request):
+        query = request.query_params.get("q", "").strip()
+        if not query:
+            return Response({"results": []})
+
+        entries = Kanji_entry.objects.prefetch_related(Prefetch(
+            "meanings",
+            queryset=Kanji_meaning.objects.filter(
+                lang=_get_language(request)
+            ).order_by("position", "kanji_meaning_id"),
+            to_attr="localized_meanings",
+        )).filter(kanji__in=set(query))
+        entries_by_kanji = {entry.kanji: entry for entry in entries}
+
+        return Response({"results": [
+            {
+                "kanji_id": entry.kanji_id,
+                "kanji": entry.kanji,
+                "meaning": [meaning.meaning for meaning in entry.localized_meanings],
+            }
+            for character in dict.fromkeys(query)
+            if (entry := entries_by_kanji.get(character))
+        ]})
+
+    def get_related_vocab(self, request):
+        query = request.query_params.get("q", "").strip()
+        if not query or query_classify(query) != "kanji":
+            return Response({"results": []})
+
+        queryset = Vocab_entry.objects.filter(
+            writtings__writting_type="kanji",
+            writtings__writting__contains=query,
+        ).prefetch_related(
+            Prefetch(
+                "writtings",
+                queryset=Vocab_writting.objects.filter(
+                    writting_type="kanji",
+                    writting__contains=query,
+                ).order_by("-common", "vocab_writting_id"),
+                to_attr="matching_writings",
+            ),
+            Prefetch(
+                "senses",
+                queryset=Vocab_sense.objects.filter(
+                    lang=_get_language(request)
+                ).order_by("position").prefetch_related(Prefetch(
+                    "meanings",
+                    queryset=Vocab_meaning.objects.order_by("vocab_meaning_id"),
+                )),
+                to_attr="localized_senses",
+            ),
+        ).distinct().order_by("vocab_id")
+
+        page = self.paginate_queryset(queryset)
+        entries = page if page is not None else queryset
+        results = []
+        for entry in entries:
+            writing = entry.matching_writings[0].writting
+            meanings = (
+                meaning.meaning
+                for sense in entry.localized_senses
+                if sense.applied_to_kanji == "*"
+                or writing in sense.applied_to_kanji.split(",")
+                for meaning in sense.meanings.all()
+                if meaning.meaning
+            )
+            results.append({
+                "vocab_id": entry.vocab_id,
+                "writting": writing,
+                "meaning": Truncator(next(meanings, "")).chars(20),
+            })
+
+        return self.get_paginated_response(results) if page is not None else Response({"results": results})

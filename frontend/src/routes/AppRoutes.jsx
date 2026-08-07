@@ -1,8 +1,6 @@
 import {Navigate, Route, Routes} from 'react-router-dom'
 import HomePage from '../pages/HomePage.jsx'
-import GrammarPage from '../pages/GrammarPage.jsx'
-import KanjiPage from '../pages/KanjiPage.jsx'
-import VocabularyPage from '../pages/VocabularyPage.jsx'
+import DictionaryPage from '../pages/DictionaryPage.jsx'
 import QuizPage from '../pages/QuizPage.jsx'
 import LoginPage from '../pages/LoginPage.jsx'
 import RegisterPage from '../pages/RegisterPage.jsx'
@@ -12,11 +10,9 @@ import LearningPage from '../pages/LearningPage.jsx'
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/explore" replace />} />
-      <Route path="/explore" element={<HomePage />} />
-      <Route path="/grammar/:searchQuery?" element={<GrammarPage/>} />
-      <Route path="/kanji/:searchQuery?" element={<KanjiPage />} />
-      <Route path="/vocab/:searchQuery?" element={<VocabularyPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/dictionary" element={<DictionaryPage />} />
+      <Route path="/explore" element={<Navigate to="/dictionary" replace />} />
       <Route path="/quiz" element={<QuizPage />} />
       <Route path="/learning" element={<LearningPage />} />
       <Route path="/login" element={<LoginPage/>} />

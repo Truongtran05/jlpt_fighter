@@ -1,7 +1,7 @@
 import {Box, VStack, Text, Heading } from "@chakra-ui/react";
 import { useLanguage } from "../contexts/LanguageContext.jsx";
 
-export default function Grammar({grammar, formation, meaning, jlpt_level, examples, ...props}) {
+export default function Grammar({grammar, formation, meaning, jlpt_level, examples = [], ...props}) {
     const { t } = useLanguage();
     return (
         <Box {...props}>
@@ -14,8 +14,8 @@ export default function Grammar({grammar, formation, meaning, jlpt_level, exampl
             { jlpt_level && <Text fontSize="2xl">{t("JLPT Level")}: N{jlpt_level}</Text> }
             <Text fontSize="2xl">{t("Meaning")}: {meaning}</Text>
             <VStack spacing={4} align="center">
-                {examples.map((example) => (
-                    <Box key={example.id} backgroundColor="white" borderWidth="1px" borderRadius="4px" padding={6} width="100%">
+                {examples.map((example, index) => (
+                    <Box key={`${example.example_japanese}-${index}`} backgroundColor="white" borderWidth="1px" borderRadius="4px" padding={6} width="100%">
                         <Text fontSize="2xl">{t("Examples")}:</Text>
                         <Text fontSize="xl">{example.example_japanese}</Text>
                         <Text fontSize="sm">{example.example_romaji}</Text>
