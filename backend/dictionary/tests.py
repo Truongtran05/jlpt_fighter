@@ -2,6 +2,7 @@ import json
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -423,6 +424,79 @@ class UpdateVocabJlptTests(TestCase):
         entry.refresh_from_db()
         self.assertEqual(entry.jlpt_level, 0)
         self.assertIn("1 ambiguous entries skipped", stdout.getvalue())
+
+
+class TranslateVocabVietnameseTests(TestCase):
+    def _write_csv(self, directory, original="猫"):
+        path = Path(directory) / "jlpt_vocab.csv"
+        path.write_text(
+            f"Original,Furigana,English,JLPT Level\n{original},ねこ,cat,N5\n",
+            encoding="utf-8",
+        )
+        return path
+
+    @patch(
+        "dictionary.management.commands.translate_vocab_vi.LibreTranslateClient.translate"
+    )
+    def test_creates_matching_vietnamese_sense_and_translates_meanings(self, translate):
+        translate.side_effect = lambda text: {"cat": "mèo", "feline": "họ mèo"}[text]
+        entry = Vocab_entry.objects.create()
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kanji", writting="猫"
+        )
+        english = Vocab_sense.objects.create(
+            vocab_entry=entry,
+            lang="en",
+            position=2,
+            part_of_speech="noun",
+            applied_to_kanji="猫",
+            applied_to_kana="ねこ",
+        )
+        Vocab_meaning.objects.create(vocab_sense=english, meaning="cat")
+        Vocab_meaning.objects.create(vocab_sense=english, meaning="feline")
+
+        with TemporaryDirectory() as directory:
+            call_command("translate_vocab_vi", path=self._write_csv(directory))
+
+        vietnamese = Vocab_sense.objects.get(
+            vocab_entry=entry, lang="vi", position=2
+        )
+        self.assertEqual(vietnamese.part_of_speech, "noun")
+        self.assertEqual(vietnamese.applied_to_kanji, "猫")
+        self.assertEqual(vietnamese.applied_to_kana, "ねこ")
+        self.assertEqual(
+            list(vietnamese.meanings.values_list("meaning", flat=True)),
+            ["mèo", "họ mèo"],
+        )
+
+    @patch(
+        "dictionary.management.commands.translate_vocab_vi.LibreTranslateClient.translate"
+    )
+    def test_deletes_and_recreates_an_existing_vietnamese_sense(self, translate):
+        translate.return_value = "mèo mới"
+        entry = Vocab_entry.objects.create()
+        Vocab_writting.objects.create(
+            vocab_entry=entry, writting_type="kanji", writting="猫"
+        )
+        english = Vocab_sense.objects.create(
+            vocab_entry=entry, lang="en", position=0
+        )
+        Vocab_meaning.objects.create(vocab_sense=english, meaning="cat")
+        vietnamese = Vocab_sense.objects.create(
+            vocab_entry=entry, lang="vi", position=3
+        )
+        Vocab_meaning.objects.create(vocab_sense=vietnamese, meaning="nghĩa cũ")
+
+        with TemporaryDirectory() as directory:
+            call_command("translate_vocab_vi", path=self._write_csv(directory))
+
+        self.assertFalse(Vocab_sense.objects.filter(pk=vietnamese.pk).exists())
+        recreated = Vocab_sense.objects.get(
+            vocab_entry=entry, lang="vi", position=0
+        )
+        self.assertEqual(
+            list(recreated.meanings.values_list("meaning", flat=True)), ["mèo mới"]
+        )
 
 
 class ImportGrammarTests(TestCase):

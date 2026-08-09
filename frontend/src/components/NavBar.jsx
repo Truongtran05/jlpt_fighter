@@ -42,14 +42,29 @@ export default function NavBar({ isCollapsed, onToggle }) {
   return (
     <>
       <Box as="nav" position="fixed" inset={{ base: "0 0 auto", lg: "0 auto 0 0" }} w={{ base: "100%", lg: isCollapsed ? "80px" : "248px" }} h={{ base: "72px", lg: "100vh" }} bg="white" borderRightWidth={{ lg: "1px" }} borderBottomWidth={{ base: "1px", lg: 0 }} p={{ base: 4, lg: isCollapsed ? "24px 12px" : "32px 20px" }} zIndex={1000} transition="width 0.2s ease, padding 0.2s ease">
-        <HStack justify="space-between" display={{ base: "flex", lg: "none" }}>
-          <Link to="/"><Text fontSize="22px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text></Link>
-          <HStack gap={1}>
+        <HStack justify="space-between" display={{ base: "flex", lg: "none" }} gap={2}>
+          <Link to="/" aria-label="JLPT Fighter">
+            <Text display={{ base: "none", sm: "block" }} fontSize="22px" fontWeight="700" color="bushido.primary">JLPT Fighter</Text>
+            <Text display={{ base: "block", sm: "none" }} fontSize="20px" fontWeight="700" color="bushido.primary">JLPT</Text>
+          </Link>
+          <HStack gap={0}>
             {mainItems.map((item) => {
               const active = location.pathname.startsWith(item.to)
               const Icon = item.icon
-              return <IconButton key={item.name} asChild variant="ghost" color={active ? "bushido.primary" : "bushido.muted"} aria-label={t(item.name)}><Link to={item.to}><Icon /></Link></IconButton>
+              return <IconButton key={item.name} asChild size="sm" variant="ghost" color={active ? "bushido.primary" : "bushido.muted"} aria-label={t(item.name)}><Link to={item.to}><Icon /></Link></IconButton>
             })}
+            <Switch.Root ml={1} size="sm" checked={language === "vi"} onCheckedChange={({ checked }) => setLanguage(checked ? "vi" : "eng")} colorPalette="green" aria-label={t("Change language")}>
+              <Switch.HiddenInput />
+              <Switch.Control><Switch.Thumb /></Switch.Control>
+              <Switch.Label fontSize="10px" fontFamily="mono" color="bushido.muted">{language === "vi" ? "VI" : "EN"}</Switch.Label>
+            </Switch.Root>
+            {currentUser ? (
+              <IconButton asChild ml={1} size="sm" variant="ghost" aria-label={t("Account")}>
+                <Link to="/me"><Box boxSize="28px" borderRadius="full" bg="bushido.primary" color="white" display="grid" placeItems="center" fontSize="12px" fontWeight="700">{initial}</Box></Link>
+              </IconButton>
+            ) : (
+              <IconButton asChild ml={1} size="sm" variant="ghost" color="bushido.primary" aria-label={t("Log in")}><Link to="/login"><LuLogIn /></Link></IconButton>
+            )}
           </HStack>
         </HStack>
 

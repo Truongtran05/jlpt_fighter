@@ -68,9 +68,27 @@ export default function DictionaryPage() {
   }, [language, relatedKey, relatedQuery, searchState.type])
 
   const relatedIsLoading = Boolean(relatedKey) && relatedResponse?.key !== relatedKey
-  const relatedResults = relatedResponse?.key === relatedKey ? relatedResponse.results : []
+  const relatedResults = (relatedResponse?.key === relatedKey ? relatedResponse.results : [])
+    .filter((entry) => {
+      const meanings = Array.isArray(entry.meaning) ? entry.meaning : [entry.meaning]
+      return meanings.some((meaning) => String(meaning ?? "").trim())
+    })
   const setPage = (page) => setSearchState((state) => ({ ...state, page, selectedId: null, showDetail: false }))
   const selectEntry = (id) => setSearchState((state) => ({ ...state, selectedId: id, showDetail: true }))
+  const searchRelatedEntry = (entry) => {
+    const type = searchState.type === "kanji" ? "vocab" : "kanji"
+    const query = String(entry.writting ?? entry.kanji ?? "").trim()
+    if (!query) return
+    setRelatedResponse(null)
+    setSearchState({
+      type,
+      query,
+      submittedQuery: query,
+      page: 1,
+      selectedId: null,
+      showDetail: false,
+    })
+  }
 
   return (
     <FullScreenVSection backgroundColor="bushido.surface" gap={6} align="stretch" width="100%" paddingX={{ base: 4, md: 6 }} paddingTop={6}>
@@ -138,7 +156,7 @@ export default function DictionaryPage() {
               ) : (
                 <VStack align="stretch" gap={2}>
                   {relatedResults.map((entry) => (
-                    <HStack key={entry.kanji_id ?? entry.vocab_id} justify="space-between" gap={4} bg="bushido.surface" borderLeftWidth="4px" borderLeftColor="bushido.primary" borderRadius="4px" p={4}>
+                    <HStack as="button" type="button" key={entry.kanji_id ?? entry.vocab_id} width="100%" justify="space-between" gap={4} bg="bushido.surface" borderWidth="1px" borderColor="transparent" borderLeftWidth="4px" borderLeftColor="bushido.primary" borderRadius="4px" p={4} textAlign="left" cursor="pointer" onClick={() => searchRelatedEntry(entry)} _hover={{ bg: "bushido.surfaceLow", borderColor: "bushido.primary" }} _focusVisible={{ outlineColor: "bushido.primary" }}>
                       <Text fontFamily="body" fontSize="24px" fontWeight="600">{entry.kanji ?? entry.writting}</Text>
                       <Text color="bushido.muted" textAlign="right">{Array.isArray(entry.meaning) ? entry.meaning.join(", ") : entry.meaning}</Text>
                     </HStack>

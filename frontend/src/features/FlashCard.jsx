@@ -1,11 +1,16 @@
-import { Box, Heading, Text, VStack , HStack , Button, Input} from "@chakra-ui/react";
+import { Box, Dialog, Heading, Text, VStack, HStack, Button, IconButton, Input, Portal } from "@chakra-ui/react";
 import { useState } from "react";
 import AuthApiClient from "../api/clients/AuthApiClient.js";
 import { FaEdit} from "react-icons/fa";
 import { BsFillBookmarkCheckFill,  BsBookmarkDashFill } from "react-icons/bs";
 import useSuggestions from "../hooks/UseSuggestions.jsx";
 import { MdDelete } from "react-icons/md";
+import { LuExpand, LuX } from "react-icons/lu";
 import { useLanguage } from "../contexts/LanguageContext.jsx";
+import Grammar from "./Grammar.jsx";
+import Kanji from "./Kanji.jsx";
+import Vocabulary from "./Vocabulary.jsx";
+import SuggestionList from "../components/SuggestionList.jsx";
 
 
 const typeLabels = {
@@ -41,7 +46,7 @@ function getCardContent(flashCard, t) {
   if (flashCard.type === "kanji") {
     return {
       front: flashCard.kanji ?? "Kanji",
-      backTitle: asList(flashCard.meaning ?? flashCard.meanings).join(", ") || t("No meaning"),
+      backTitle: (asList(flashCard.meaning ?? flashCard.meanings).join(", ") || t("No meaning")).substring(0, 50),
       lines: [
         ["Onyomi", asList(flashCard.onyomi).join(", ")],
         ["Kunyomi", asList(flashCard.kunyomi).join(", ")],
@@ -58,7 +63,7 @@ function getCardContent(flashCard, t) {
 
     return {
       front: kanji[0] ?? kana[0] ?? t("Vocabulary"),
-      backTitle: senses.flatMap((sense) => asList(sense.meanings)).join("; ") || t("No meaning"),
+      backTitle: (senses.flatMap((sense) => asList(sense.meanings)).join("; ") || t("No meaning")).substring(0, 50),
       lines: [
         ["Kanji", kanji.join(", ")],
         ["Kana", kana.join(", ")],
@@ -71,7 +76,7 @@ function getCardContent(flashCard, t) {
     const examples = asList(flashCard.examples);
     return {
       front: flashCard.grammar ?? t("Grammar"),
-      backTitle: asList(flashCard.meaning).join("; ") || t("No meaning"),
+      backTitle: (asList(flashCard.meaning).join("; ") || t("No meaning")).substring(0, 50),
       lines: [
         [t("Formation"), flashCard.formation],
         ["JLPT", flashCard.jlpt_level ? `N${flashCard.jlpt_level}` : null],
@@ -95,6 +100,7 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable 
   const { language, t } = useLanguage();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   if (!flashCard) {
     return null;
@@ -130,7 +136,7 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable 
     setIsEditing(false);
   }
 
-  return (
+  return (<>
     <Box
       as="button"
       type="button"
@@ -190,28 +196,65 @@ export default function FlashCard({ flashCard, onUpdated , onDelete, isEditable 
           </CardFace>
 
           <CardFace transform="rotateX(180deg)">
-            <Text fontSize="sm" color="bushido.muted">
-              {cardType}
-            </Text>
-            <Heading size="lg" textAlign="center" color="bushido.ink">
+            <IconButton
+              position="absolute"
+              top={4}
+              right={4}
+              size="sm"
+              variant="ghost"
+              color="bushido.primary"
+              aria-label={t("View details")}
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsDetailOpen(true);
+              }}
+            >
+              <LuExpand />
+            </IconButton>
+            <Heading size="lg" textAlign="center" color="bushido.ink" my="auto">
               {content.backTitle}
             </Heading>
-            <VStack align="stretch" gap={2} width="100%">
-              {content.lines
-                .filter(([, value]) => value)
-                .map(([label, value]) => (
-                  <Text key={label} fontSize="md" color="bushido.muted">
-                    <Text as="span" fontWeight="semibold">
-                      {label}:
-                    </Text> {" "}
-                    {value}
-                  </Text>
-                ))}
-            </VStack>
           </CardFace>
         </Box>
       )}
     </Box>
+    <FlashCardDetailDialog
+      flashCard={flashCard}
+      open={isDetailOpen}
+      onOpenChange={setIsDetailOpen}
+    />
+  </>);
+}
+
+function FlashCardDetailDialog({ flashCard, open, onOpenChange }) {
+  const { t } = useLanguage();
+  const meanings = flashCard.type === "vocab"
+    ? asList(flashCard.senses).flatMap((sense) => asList(sense.meanings))
+    : asList(flashCard.meaning ?? flashCard.meanings);
+
+  return (
+    <Dialog.Root open={open} onOpenChange={({ open: nextOpen }) => onOpenChange(nextOpen)}>
+      <Portal>
+        <Dialog.Backdrop backdropFilter="blur(8px)" />
+        <Dialog.Positioner p={4}>
+          <Dialog.Content maxW="720px" maxH="calc(100vh - 32px)" bg="bushido.surfaceLowest" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px">
+            <Dialog.Header borderBottomWidth="1px" borderColor="bushido.outlineVariant">
+              <Dialog.Title>{t("Flashcard details")}</Dialog.Title>
+              <IconButton ml="auto" size="sm" variant="ghost" aria-label={t("Close")} onClick={() => onOpenChange(false)}><LuX /></IconButton>
+            </Dialog.Header>
+            <Dialog.Body overflowY="auto" py={6}>
+              {flashCard.type === "kanji" ? (
+                <Kanji kanji={flashCard.kanji} onyomi={asList(flashCard.onyomi)} kunyomi={asList(flashCard.kunyomi)} strokeCount={flashCard.strokeCount ?? flashCard.stroke_count} jlptLevel={flashCard.jlptLevel ?? flashCard.jlpt_level} meaning={meanings} />
+              ) : flashCard.type === "grammar" ? (
+                <Grammar grammar={flashCard.grammar} formation={flashCard.formation} meaning={meanings.join("; ")} jlpt_level={flashCard.jlpt_level} examples={asList(flashCard.examples)} />
+              ) : (
+                <Vocabulary kanji={asList(flashCard.kanji ?? flashCard.writings?.kanji)} kana={asList(flashCard.kana ?? flashCard.writings?.kana)} meaning={meanings} />
+              )}
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   );
 }
 
@@ -224,7 +267,8 @@ function CardEditForm({onSubmit, onCancel }) {
 
   const handleChange = (e) => {
     setQuery(e.target.value);
-    setIsSuggestionsOpen(true);
+    setSelectedSuggestion(null);
+    setIsSuggestionsOpen(Boolean(e.target.value.trim()));
   };
 
   return(
@@ -249,48 +293,27 @@ function CardEditForm({onSubmit, onCancel }) {
         }}
       >
         <Heading size="md">{t("Edit Flashcard")}</Heading>
-        <Input 
-          placeholder={t("Type your kanji/vocab/grammar term here...")}
-          backgroundColor="white"
-          color="bushido.ink"
-          autoFocus
-          value={query}
-          onChange={handleChange}
-        />
+        <Box position="relative">
+          <Input 
+            placeholder={t("Type your kanji/vocab/grammar term here...")}
+            backgroundColor="white"
+            color="bushido.ink"
+            autoFocus
+            value={query}
+            onChange={handleChange}
+          />
+          <SuggestionList
+            open={isSuggestionsOpen}
+            suggestions={suggestions}
+            maxHeight="100px"
+            onSelect={(suggestion, text) => {
+              setSelectedSuggestion(suggestion);
+              setQuery(text);
+              setIsSuggestionsOpen(false);
+            }}
+          />
+        </Box>
         {selectedSuggestion && (<Text color="bushido.muted" fontSize="sm">{t("Selected")}: {selectedSuggestion.text}</Text>)}
-        {isSuggestionsOpen && suggestions.length > 0 && (
-            <VStack
-                align="stretch"
-                gap={0}
-                position="relative"
-                top="0px"
-                left={0}
-                right={0}
-                overflowY="auto"
-                maxHeight="200px"
-                backgroundColor="white"
-                borderWidth="1px"
-                borderColor="bushido.outline"
-                zIndex={1000}
-            >
-                {suggestions.map((suggestion) => (
-                    <Box
-                        key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
-                        onClick={() => {
-                            setSelectedSuggestion(suggestion);
-                            setQuery(asList(suggestion.text)[0] ?? "");
-                            setIsSuggestionsOpen(false);
-                        }}
-                        padding="8px"
-                        cursor="pointer"
-                        _hover={{ backgroundColor: 'bushido.surfaceLow' }}
-                    >
-                        <Text color="black">{asList(suggestion.text).join(", ")}</Text>
-                        <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
-                    </Box>
-                ))}
-            </VStack>
-        )}
         <HStack justify="flex-end" gap={2}>
           <Button {...secondaryButtonStyles} type="button" onClick={onCancel}>
             {t("Cancel")}

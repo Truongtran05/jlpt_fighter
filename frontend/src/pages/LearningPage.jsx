@@ -11,6 +11,7 @@ import {getStoredUser} from "../utils/AuthStorage.js"
 import { useNavigate } from "react-router-dom";
 import { toaster } from "../components/ui/toaster.jsx";
 import { useLanguage } from "../contexts/LanguageContext.jsx";
+import SuggestionList from "../components/SuggestionList.jsx";
 
 export default function LearningPage() {
     const { language, t } = useLanguage();
@@ -485,29 +486,16 @@ export default function LearningPage() {
                                                 autoFocus
                                                 required
                                             />
-                                            {isSuggestionsOpen && suggestions.length > 0 && (
-                                                <VStack align="stretch" gap={0} position="absolute" top="calc(100% + 4px)" left={0} right={0} overflowY="auto" maxHeight="200px" backgroundColor="white" borderWidth="1px" borderColor="bushido.outline" borderRadius="4px" zIndex={1000}>
-                                                    {suggestions.map((suggestion) => (
-                                                        <Box
-                                                            as="button"
-                                                            type="button"
-                                                            key={`${suggestion.type}-${suggestion.id}-${suggestion.text}`}
-                                                            onClick={() => {
-                                                                setSelectedSuggestion(suggestion);
-                                                                setNewCardQuery(Array.isArray(suggestion.text) ? suggestion.text[0] ?? "" : suggestion.text);
-                                                                setIsSuggestionsOpen(false);
-                                                            }}
-                                                            padding="8px"
-                                                            textAlign="left"
-                                                            cursor="pointer"
-                                                            _hover={{ backgroundColor: "bushido.surfaceLow" }}
-                                                        >
-                                                            <Text color="black">{Array.isArray(suggestion.text) ? suggestion.text.join(", ") : suggestion.text}</Text>
-                                                            <Text color="bushido.muted" fontSize="sm">{(suggestion.meaning ?? []).join(", ")}</Text>
-                                                        </Box>
-                                                    ))}
-                                                </VStack>
-                                            )}
+                                            <SuggestionList
+                                                open={isSuggestionsOpen}
+                                                suggestions={suggestions}
+                                                maxHeight="200px"
+                                                onSelect={(suggestion, text) => {
+                                                    setSelectedSuggestion(suggestion);
+                                                    setNewCardQuery(text);
+                                                    setIsSuggestionsOpen(false);
+                                                }}
+                                            />
                                         </Box>
                                         {selectedSuggestion && <Text color="bushido.ink">{t("Selected")} {t(selectedSuggestion.type)}: {selectedSuggestion.text}</Text>}
                                         {formError && <Text color="bushido.error">{t(formError)}</Text>}

@@ -12,13 +12,7 @@ from rest_framework.response import Response
 def _get_language(request):
     return {'en': 'en', 'eng': 'en', 'vi': 'vi', 'vie': 'vi'}.get(request.GET.get('lang', 'eng').lower(), 'en')
 
-class DictionaryStatsView(View):
-    def get(self, request):
-        return JsonResponse({
-            'vocabulary': Vocab_entry.objects.count(),
-            'kanji': Kanji_entry.objects.count(),
-            'grammar': Grammar_entry.objects.count(),
-        })
+
 
 #class-based view for searching kanji characters
 class KanjiSearchView(View):
@@ -456,3 +450,58 @@ class FetchRelatedView(viewsets.ModelViewSet):
             })
 
         return self.get_paginated_response(results) if page is not None else Response({"results": results})
+
+class DictionaryStatsView(viewsets.ViewSet):
+    http_method_names = ["get", "head", "options"]
+
+    def get_dictionary_stats(self, request):
+        return JsonResponse({
+            'vocabulary': Vocab_entry.objects.count(),
+            'kanji': Kanji_entry.objects.count(),
+            'grammar': Grammar_entry.objects.count(),
+        })
+
+    
+    def get_jlpt_kanji(self, request):
+        N1_kanji = Kanji_entry.objects.filter(jlpt_level=1)
+        N2_kanji = Kanji_entry.objects.filter(jlpt_level=2)
+        N3_kanji = Kanji_entry.objects.filter(jlpt_level=3)
+        N4_kanji = Kanji_entry.objects.filter(jlpt_level=4)
+        N5_kanji = Kanji_entry.objects.filter(jlpt_level=5)
+
+        return JsonResponse({
+            'N1': list(N1_kanji.values_list('kanji', flat=True)),
+            'N2': list(N2_kanji.values_list('kanji', flat=True)),
+            'N3': list(N3_kanji.values_list('kanji', flat=True)),
+            'N4': list(N4_kanji.values_list('kanji', flat=True)),
+            'N5': list(N5_kanji.values_list('kanji', flat=True)),
+        })
+    def get_jlpt_vocab(self, request):
+        N1_vocab = Vocab_entry.objects.prefetch_related('writtings').filter(jlpt_level=1, writtings__writting_type='kanji')
+        N2_vocab = Vocab_entry.objects.prefetch_related('writtings').filter(jlpt_level=2, writtings__writting_type='kanji')
+        N3_vocab = Vocab_entry.objects.prefetch_related('writtings').filter(jlpt_level=3, writtings__writting_type='kanji')
+        N4_vocab = Vocab_entry.objects.prefetch_related('writtings').filter(jlpt_level=4, writtings__writting_type='kanji')
+        N5_vocab = Vocab_entry.objects.prefetch_related('writtings').filter(jlpt_level=5, writtings__writting_type='kanji')
+
+        return JsonResponse({
+            'N1': list(N1_vocab.values_list('writtings__writting', flat=True)),
+            'N2': list(N2_vocab.values_list('writtings__writting', flat=True)),
+            'N3': list(N3_vocab.values_list('writtings__writting', flat=True)),
+            'N4': list(N4_vocab.values_list('writtings__writting', flat=True)),
+            'N5': list(N5_vocab.values_list('writtings__writting', flat=True)),
+        })
+
+    def get_jlpt_grammar(self, request):
+        N1_grammar = Grammar_entry.objects.filter(jlpt_level=1)
+        N2_grammar = Grammar_entry.objects.filter(jlpt_level=2)
+        N3_grammar = Grammar_entry.objects.filter(jlpt_level=3)
+        N4_grammar = Grammar_entry.objects.filter(jlpt_level=4)
+        N5_grammar = Grammar_entry.objects.filter(jlpt_level=5)
+
+        return JsonResponse({
+            'N1': list(N1_grammar.values_list('grammar', flat=True)),
+            'N2': list(N2_grammar.values_list('grammar', flat=True)),
+            'N3': list(N3_grammar.values_list('grammar', flat=True)),
+            'N4': list(N4_grammar.values_list('grammar', flat=True)),
+            'N5': list(N5_grammar.values_list('grammar', flat=True)),
+        })
