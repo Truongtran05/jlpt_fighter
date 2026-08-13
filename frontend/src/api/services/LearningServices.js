@@ -1,12 +1,12 @@
 import AuthApiClient from "../clients/AuthApiClient"
 import {LearningEndPoints} from "../endpoints/LearningEndpoints"
 
-export function getFlashCardSets(userId){
-    return AuthApiClient.get(LearningEndPoints.flashCardSets(userId))
+export function getFlashCardSets(){
+    return AuthApiClient.get(LearningEndPoints.flashCardSets)
 }
 
-export function createFlashCardSet(userId, setData){
-    return AuthApiClient.post(LearningEndPoints.flashCardSets(userId), setData)
+export function createFlashCardSet(setData){
+    return AuthApiClient.post(LearningEndPoints.flashCardSets, setData)
 }
 
 export function getFlashCardSetDetails(setId){
@@ -21,8 +21,8 @@ export function deleteFlashCardSet(setId){
     return AuthApiClient.delete(LearningEndPoints.flashCardSetDetails(setId))
 }
 
-export function createFlashCard(setId, cardData){
-    return AuthApiClient.post(LearningEndPoints.flashCardSetCards(setId), cardData)
+export function createFlashCard(setId, cardData, language){
+    return AuthApiClient.post(LearningEndPoints.flashCardSetCards(setId), cardData, { params: { lang: language } })
 }
 
 export function updateFlashCard(cardId, cardData){

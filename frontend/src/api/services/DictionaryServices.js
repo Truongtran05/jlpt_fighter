@@ -5,6 +5,15 @@ export function getDictionaryStats(){
     return ApiClient.get(DictionaryEndPoints.stats)
 }
 
+export function getJlptEntries(type){
+    const endpoints = {
+        kanji: DictionaryEndPoints.jlptKanji,
+        vocab: DictionaryEndPoints.jlptVocab,
+        grammar: DictionaryEndPoints.jlptGrammar,
+    }
+    return ApiClient.get(endpoints[type])
+}
+
 export function getRelatedKanji(query){
     return ApiClient.get(DictionaryEndPoints.relatedKanji, { params: query })
 }
