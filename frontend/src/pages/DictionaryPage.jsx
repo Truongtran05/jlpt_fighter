@@ -14,12 +14,16 @@ import { createFlashCard, getFlashCardSets } from "../api/services/LearningServi
 import { getStoredUser } from "../utils/AuthStorage.js"
 import { toaster } from "../components/ui/toaster.jsx"
 
-const jlptLevels = [5, 4, 3, 2, 1]
+const jlptLevels = [1, 2, 3, 4, 5]
 
 function JlptBrowser({ type, onSelect, t }) {
   const [state, setState] = useState({ type: null, data: null, error: false })
+  const [selectedLevel, setSelectedLevel] = useState(null)
+  const shouldFetchJlpt = selectedLevel !== null
 
   useEffect(() => {
+    if (!shouldFetchJlpt) return
+
     let cancelled = false
     getJlptEntries(type)
       .then(({ data }) => {
@@ -27,69 +31,86 @@ function JlptBrowser({ type, onSelect, t }) {
       })
       .catch(() => {
         if (!cancelled) setState({ type, data: null, error: true })
-      })
+    })
     return () => { cancelled = true }
-  }, [type])
-
-  if (state.type !== type) {
-    return <Heading as="h1" size="2xl" textAlign="center">{t("Loading...")}</Heading>
-  }
-  if (state.error) {
-    return <Heading as="h1" size="lg" textAlign="center">{t("Unable to load JLPT entries.")}</Heading>
-  }
+  }, [shouldFetchJlpt, type])
 
   return (
     <VStack align="stretch" gap={6}>
       <Box>
         <Heading as="h1" fontFamily="heading" fontSize={{ base: "24px", md: "32px" }}>{t("Browse by JLPT level")}</Heading>
         <Text mt={1} color="bushido.muted">{t("Select an entry to open its dictionary details.")}</Text>
+        <HStack mt={4} gap={2} flexWrap="wrap">
+          {jlptLevels.map((level) => {
+            const selected = selectedLevel === level
+            return (
+              <Button
+                key={level}
+                type="button"
+                size="sm"
+                px={4}
+                bg={selected ? "bushido.primary" : "transparent"}
+                color={selected ? "white" : "bushido.ink"}
+                borderWidth="1px"
+                borderColor={selected ? "bushido.primary" : "bushido.outline"}
+                borderRadius="8px"
+                aria-pressed={selected}
+                onClick={() => setSelectedLevel(level)}
+                _hover={{ bg: selected ? "bushido.primaryHover" : "bushido.surfaceLow", borderColor: "bushido.primary" }}
+                _focusVisible={{ outline: "3px solid", outlineColor: "bushido.primary", outlineOffset: "2px" }}
+              >
+                N{level}
+              </Button>
+            )
+          })}
+        </HStack>
       </Box>
-      {jlptLevels.map((level) => {
-        const entries = [...new Set(state.data?.[`N${level}`] ?? [])]
+      {selectedLevel === null ? null : state.type !== type ? (
+        <Heading as="h2" size="lg" textAlign="center">{t("Loading...")}</Heading>
+      ) : state.error ? (
+        <Heading as="h2" size="lg" textAlign="center">{t("Unable to load JLPT entries.")}</Heading>
+      ) : (() => {
+        const entries = [...new Set(state.data?.[`N${selectedLevel}`] ?? [])]
         return (
-          <Box key={level} as="section" bg="white" borderWidth="1px" borderColor="bushido.outlineVariant" borderRadius="8px" overflow="hidden">
+          <Box as="section" bg="white" borderWidth="1px" borderColor="bushido.outlineVariant" borderRadius="8px" overflow="hidden">
             <HStack justify="space-between" px={{ base: 4, md: 6 }} py={4} bg="bushido.surfaceLow" borderBottomWidth="1px" borderColor="bushido.outlineVariant">
-              <Heading as="h2" fontFamily="heading" fontSize="20px">JLPT N{level}</Heading>
+              <Heading as="h2" fontFamily="heading" fontSize="20px">JLPT N{selectedLevel}</Heading>
               <Text fontFamily="mono" fontSize="12px" color="bushido.muted">{entries.length} {t("entries")}</Text>
             </HStack>
             {entries.length === 0 ? (
               <Text p={6} color="bushido.muted">{t("No entries available for this level.")}</Text>
             ) : (
-              <Grid
-                templateColumns={type === "kanji"
-                  ? { base: "repeat(4, 1fr)", sm: "repeat(6, 1fr)", md: "repeat(10, 1fr)", lg: "repeat(12, 1fr)" }
-                  : { base: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" }}
-                gap="1px"
-                bg="bushido.outlineVariant"
-              >
+              <HStack align="flex-start" flexWrap="wrap" gap={2} p={{ base: 4, md: 6 }}>
                 {entries.map((entry) => (
                   <Button
                     key={entry}
                     type="button"
+                    width="fit-content"
                     h="auto"
-                    minH={type === "kanji" ? "64px" : "56px"}
-                    p={3}
-                    justifyContent={type === "kanji" ? "center" : "flex-start"}
+                    minH={type === "kanji" ? "48px" : "40px"}
+                    px={4}
+                    py={2}
                     bg="white"
                     color="bushido.ink"
-                    borderRadius="0"
+                    borderWidth="1px"
+                    borderColor="bushido.outlineVariant"
+                    borderRadius="9999px"
                     fontFamily="body"
-                    fontSize={type === "kanji" ? "28px" : "16px"}
+                    fontSize={type === "kanji" ? "24px" : "16px"}
                     fontWeight={type === "kanji" ? "500" : "600"}
-                    whiteSpace="normal"
-                    textAlign="left"
-                    _hover={{ bg: "bushido.surfaceLow", color: "bushido.primary" }}
-                    _focusVisible={{ outline: "3px solid", outlineColor: "bushido.primary", outlineOffset: "-3px" }}
+                    whiteSpace="nowrap"
+                    _hover={{ bg: "bushido.surfaceLow", color: "bushido.primary", borderColor: "bushido.primary" }}
+                    _focusVisible={{ outline: "3px solid", outlineColor: "bushido.primary", outlineOffset: "2px" }}
                     onClick={() => onSelect(entry)}
                   >
                     {entry}
                   </Button>
                 ))}
-              </Grid>
+              </HStack>
             )}
           </Box>
         )
-      })}
+      })()}
     </VStack>
   )
 }
